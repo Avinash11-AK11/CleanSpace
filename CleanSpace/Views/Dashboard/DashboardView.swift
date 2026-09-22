@@ -179,6 +179,7 @@ struct DashboardView: View {
                 }
             }
             .task {
+                permissionManager.refreshStatuses()
                 if !permissionManager.hasPhotoAccess {
                     showPermissionSheet = true
                 } else {
@@ -186,8 +187,13 @@ struct DashboardView: View {
                 }
             }
             .sheet(isPresented: $showPermissionSheet) {
-                PermissionRequestSheet()
-                    .presentationDetents([.fraction(0.7)])
+                PermissionRequestSheet {
+                    permissionManager.refreshStatuses()
+                    Task {
+                        await viewModel.startFullScan()
+                    }
+                }
+                .presentationDetents([.fraction(0.7)])
             }
         }
     }

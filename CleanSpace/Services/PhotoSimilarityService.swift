@@ -10,9 +10,11 @@ final class PhotoSimilarityService: @unchecked Sendable {
     
     private init() {}
     
-    /// Finds groups of similar or duplicate photos using a 2-pass high performance algorithm:
-    /// Pass 1: Bucket candidates by timestamp window (within 60 seconds) or similar aspect ratios.
-    /// Pass 2: Generate thumbnail image prints and compute perceptual difference.
+    /// Finds groups of similar or duplicate photos.
+    /// Uses a robust multi-strategy approach:
+    /// Strategy 1: Burst / Time-proximity clustering (photos taken within 60s)
+    /// Strategy 2: Dimension clustering (matching aspect ratio & resolution)
+    /// Strategy 3: Visual perceptual similarity using CGContext bitmap sampling
     func findSimilarGroups(
         photos: [PHAsset],
         progressHandler: (@Sendable (Double, String) -> Void)? = nil
@@ -21,62 +23,90 @@ final class PhotoSimilarityService: @unchecked Sendable {
         
         progressHandler?(0.05, "Sorting and bucketing candidates...")
         
-        // Pass 1: Pre-group candidates by creation timestamp window (e.g. within 45 seconds of each other)
-        // Photos taken in bursts or closely together are prime candidates for similar/duplicate shots
+        // Pass 1: Build candidate clusters
         var candidateClusters: [[PHAsset]] = []
-        var currentCluster: [PHAsset] = []
         
-        let sortedPhotos = photos.sorted { ($0.creationDate ?? .distantPast) < ($1.creationDate ?? .distantPast) }
-        
-        for photo in sortedPhotos {
+        // Cluster by time window (bursts or close shots within 60s)
+        let sortedByDate = photos.sorted { ($0.creationDate ?? .distantPast) < ($1.creationDate ?? .distantPast) }
+        var timeCluster: [PHAsset] = []
+        for photo in sortedByDate {
             guard let currentDate = photo.creationDate else { continue }
-            if let last = currentCluster.last, let lastDate = last.creationDate {
+            if let last = timeCluster.last, let lastDate = last.creationDate {
                 let interval = abs(currentDate.timeIntervalSince(lastDate))
-                if interval <= 45.0 {
-                    currentCluster.append(photo)
+                if interval <= 60.0 {
+                    timeCluster.append(photo)
                 } else {
-                    if currentCluster.count >= 2 {
-                        candidateClusters.append(currentCluster)
+                    if timeCluster.count >= 2 {
+                        candidateClusters.append(timeCluster)
                     }
-                    currentCluster = [photo]
+                    timeCluster = [photo]
                 }
             } else {
-                currentCluster = [photo]
+                timeCluster = [photo]
             }
         }
-        if currentCluster.count >= 2 {
-            candidateClusters.append(currentCluster)
+        if timeCluster.count >= 2 {
+            candidateClusters.append(timeCluster)
         }
         
-        // Also bucket photos with identical pixel dimensions if taken within same day
-        let totalClusters = candidateClusters.count
-        var resultGroups: [PhotoGroup] = []
+        // Also cluster photos with identical aspect ratios & resolutions (e.g. imported or duplicate files)
+        var dimensionBuckets: [String: [PHAsset]] = [:]
+        for photo in photos {
+            let key = "\(photo.pixelWidth)x\(photo.pixelHeight)"
+            dimensionBuckets[key, default: []].append(photo)
+        }
+        for (_, bucket) in dimensionBuckets where bucket.count >= 2 {
+            candidateClusters.append(bucket)
+        }
         
+        // If library has 50 or fewer photos (typical on simulator or small test albums), also compare all
+        if photos.count <= 50 {
+            candidateClusters.append(photos)
+        }
+        
+        // Deduplicate clusters to avoid redundant work
+        var seenClusterSets = Set<Set<String>>()
+        var uniqueClusters: [[PHAsset]] = []
+        for cluster in candidateClusters {
+            let idSet = Set(cluster.map { $0.localIdentifier })
+            if !seenClusterSets.contains(idSet) {
+                seenClusterSets.insert(idSet)
+                uniqueClusters.append(cluster)
+            }
+        }
+        
+        let totalClusters = uniqueClusters.count
         guard totalClusters > 0 else {
             progressHandler?(1.0, "Scan complete")
             return []
         }
         
-        let targetSize = CGSize(width: 120, height: 120)
+        var resultGroups: [PhotoGroup] = []
+        var groupedAssetIds = Set<String>()
+        
+        let targetSize = CGSize(width: 100, height: 100)
         let options = PHImageRequestOptions()
         options.isSynchronous = true
         options.deliveryMode = .fastFormat
         options.resizeMode = .fast
-        options.isNetworkAccessAllowed = false
+        options.isNetworkAccessAllowed = true
         
         var processedCount = 0
         
-        for cluster in candidateClusters {
+        for cluster in uniqueClusters {
             processedCount += 1
             let progress = 0.1 + (Double(processedCount) / Double(totalClusters)) * 0.85
             progressHandler?(progress, "Analyzing photos (\(processedCount)/\(totalClusters))...")
             
+            let activeCluster = cluster.filter { !groupedAssetIds.contains($0.localIdentifier) }
+            guard activeCluster.count >= 2 else { continue }
+            
             // Extract lightweight feature fingerprints for this cluster
             var items: [(asset: PHAsset, fingerprint: [UInt8], score: Double)] = []
             
-            for asset in cluster {
-                if let image = self.loadThumbnail(for: asset, targetSize: targetSize, options: options),
-                   let fingerprint = self.computePerceptualHash(from: image) {
+            for asset in activeCluster {
+                if let image = self.loadThumbnail(for: asset, targetSize: targetSize, options: options) {
+                    let fingerprint = self.computePerceptualHash(from: image)
                     let score = self.calculateBestScore(asset: asset)
                     items.append((asset, fingerprint, score))
                 }
@@ -84,9 +114,7 @@ final class PhotoSimilarityService: @unchecked Sendable {
             
             guard items.count >= 2 else { continue }
             
-            // Group within the cluster based on fingerprint distance
             var visited = Set<Int>()
-            
             for i in 0..<items.count {
                 if visited.contains(i) { continue }
                 var groupAssets: [PHAsset] = [items[i].asset]
@@ -96,8 +124,10 @@ final class PhotoSimilarityService: @unchecked Sendable {
                 
                 for j in (i + 1)..<items.count {
                     if visited.contains(j) { continue }
+                    
                     let similarity = self.compareFingerprints(items[i].fingerprint, items[j].fingerprint)
-                    if similarity >= 0.88 {
+                    // 0.82 threshold accommodates minor compression, crop, or lighting differences
+                    if similarity >= 0.82 {
                         visited.insert(j)
                         groupAssets.append(items[j].asset)
                         if items[j].score > bestScore {
@@ -108,6 +138,7 @@ final class PhotoSimilarityService: @unchecked Sendable {
                 }
                 
                 if groupAssets.count >= 2 {
+                    for a in groupAssets { groupedAssetIds.insert(a.localIdentifier) }
                     let photoItems = groupAssets.map { asset in
                         PhotoItem(asset: asset, fileSize: PhotoScanner.shared.estimateAssetSize(asset: asset))
                     }
@@ -121,7 +152,7 @@ final class PhotoSimilarityService: @unchecked Sendable {
             }
         }
         
-        progressHandler?(1.0, "Found \(resultGroups.count) similar groups")
+        progressHandler?(1.0, "Found \(resultGroups.count) groups")
         return resultGroups
     }
     
@@ -133,36 +164,56 @@ final class PhotoSimilarityService: @unchecked Sendable {
         return result
     }
     
-    /// Generates a 32-byte 16x16 downsampled grayscale brightness vector for fast perceptual comparison
-    private func computePerceptualHash(from image: UIImage) -> [UInt8]? {
-        let size = CGSize(width: 16, height: 16)
-        UIGraphicsBeginImageContextWithOptions(size, true, 1.0)
-        defer { UIGraphicsEndImageContext() }
-        
-        image.draw(in: CGRect(origin: .zero, size: size))
-        guard let context = UIGraphicsGetCurrentContext(),
-              let pixelData = context.data else {
-            return nil
-        }
-        
-        let pointer = pixelData.bindMemory(to: UInt8.self, capacity: 16 * 16 * 4)
-        var grayscaleValues = [UInt8]()
-        grayscaleValues.reserveCapacity(256)
-        
-        for y in 0..<16 {
-            for x in 0..<16 {
-                let offset = 4 * (y * 16 + x)
-                let r = pointer[offset]
-                let g = pointer[offset + 1]
-                let b = pointer[offset + 2]
-                let gray = UInt8((UInt32(r) * 299 + UInt32(g) * 587 + UInt32(b) * 114) / 1000)
-                grayscaleValues.append(gray)
+    /// Generates a reliable 16x16 grayscale perceptual vector using direct CoreGraphics bitmap context
+    private func computePerceptualHash(from image: UIImage) -> [UInt8] {
+        guard let cgImage = image.cgImage else {
+            let renderer = UIGraphicsImageRenderer(size: CGSize(width: 16, height: 16))
+            let downsampled = renderer.image { _ in
+                image.draw(in: CGRect(x: 0, y: 0, width: 16, height: 16))
             }
+            if let renderedCG = downsampled.cgImage {
+                return extractGrayscaleBytes(from: renderedCG)
+            }
+            return [UInt8](repeating: 128, count: 256)
         }
-        return grayscaleValues
+        return extractGrayscaleBytes(from: cgImage)
     }
     
-    /// Compares two 16x16 perceptual hashes, returning a similarity value 0.0 ... 1.0
+    private func extractGrayscaleBytes(from cgImage: CGImage) -> [UInt8] {
+        let width = 16
+        let height = 16
+        var rawData = [UInt8](repeating: 0, count: width * height * 4)
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue
+        
+        guard let context = CGContext(
+            data: &rawData,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: width * 4,
+            space: colorSpace,
+            bitmapInfo: bitmapInfo
+        ) else {
+            return [UInt8](repeating: 128, count: 256)
+        }
+        
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        
+        var grayscale: [UInt8] = []
+        grayscale.reserveCapacity(256)
+        for i in 0..<256 {
+            let offset = i * 4
+            let r = UInt32(rawData[offset])
+            let g = UInt32(rawData[offset + 1])
+            let b = UInt32(rawData[offset + 2])
+            let grayValue = (r * 299 + g * 587 + b * 114) / 1000
+            grayscale.append(UInt8(truncatingIfNeeded: grayValue))
+        }
+        return grayscale
+    }
+    
+    /// Compares two 16x16 perceptual hashes, returning similarity 0.0 ... 1.0
     private func compareFingerprints(_ a: [UInt8], _ b: [UInt8]) -> Double {
         guard a.count == b.count, !a.isEmpty else { return 0.0 }
         var totalDiff: Double = 0
@@ -170,19 +221,15 @@ final class PhotoSimilarityService: @unchecked Sendable {
             totalDiff += abs(Double(a[i]) - Double(b[i]))
         }
         let maxDiff = Double(a.count * 255)
-        let distanceRatio = totalDiff / maxDiff
-        return max(0.0, 1.0 - distanceRatio)
+        return max(0.0, 1.0 - (totalDiff / maxDiff))
     }
     
-    /// Scores photo quality: higher resolution + favorite + newest
+    /// Scores photo quality: resolution + favorite + recency
     private func calculateBestScore(asset: PHAsset) -> Double {
         var score: Double = 0.0
-        // Resolution weight
         let pixels = Double(asset.pixelWidth * asset.pixelHeight)
         score += min(pixels / 12_000_000.0, 2.0) * 10.0
-        // Favorite weight
         if asset.isFavorite { score += 5.0 }
-        // Newer timestamp weight slightly preferred
         if let date = asset.creationDate {
             score += date.timeIntervalSince1970 / 1_000_000_000.0
         }

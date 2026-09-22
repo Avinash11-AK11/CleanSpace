@@ -47,6 +47,7 @@ final class DashboardViewModel: ObservableObject {
         
         let permissions = PermissionManager.shared
         permissions.refreshStatuses()
+        print("CleanSpace: Scanning with photoStatus = \(permissions.photoStatus.rawValue), contactStatus = \(permissions.contactStatus.rawValue)")
         
         // Scan Photos if permission granted
         if permissions.hasPhotoAccess {
@@ -60,10 +61,12 @@ final class DashboardViewModel: ObservableObject {
             for shot in shots {
                 CleanupManager.shared.allScreenshotsMap[shot.id] = shot
             }
+            print("CleanSpace: Fetched \(shots.count) screenshots")
             
             // 2. Similar photos
             currentTask = "Analyzing photos for similarities..."
             let allPhotos = PhotoScanner.shared.fetchAllPhotos()
+            print("CleanSpace: Fetched \(allPhotos.count) total photo assets")
             let groups = await PhotoSimilarityService.shared.findSimilarGroups(photos: allPhotos) { [weak self] progress, task in
                 Task { @MainActor in
                     self?.scanProgress = 0.2 + progress * 0.45
@@ -77,6 +80,7 @@ final class DashboardViewModel: ObservableObject {
                     CleanupManager.shared.allPhotosMap[photo.id] = photo
                 }
             }
+            print("CleanSpace: Found \(groups.count) similar photo groups")
             
             // 3. Large Videos
             currentTask = "Scanning for large videos..."
@@ -87,6 +91,9 @@ final class DashboardViewModel: ObservableObject {
             for video in videos {
                 CleanupManager.shared.allVideosMap[video.id] = video
             }
+            print("CleanSpace: Fetched \(videos.count) large videos")
+        } else {
+            print("CleanSpace: Photo access not granted (status = \(permissions.photoStatus.rawValue))")
         }
         
         // 4. Contacts
@@ -102,8 +109,9 @@ final class DashboardViewModel: ObservableObject {
                         CleanupManager.shared.allContactsMap[contact.id] = contact
                     }
                 }
+                print("CleanSpace: Found \(dupGroups.count) duplicate contact groups")
             } catch {
-                print("Failed to scan contacts: \(error)")
+                print("CleanSpace: Failed to scan contacts: \(error)")
             }
         }
         

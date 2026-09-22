@@ -3,6 +3,7 @@ import SwiftUI
 struct PermissionRequestSheet: View {
     @ObservedObject var permissionManager = PermissionManager.shared
     @Environment(\.dismiss) private var dismiss
+    var onDismiss: (() -> Void)? = nil
     
     var body: some View {
         VStack(spacing: 28) {
@@ -51,6 +52,7 @@ struct PermissionRequestSheet: View {
                     
                     if permissionManager.hasPhotoAccess {
                         Image(systemName: "checkmark.circle.fill")
+                            .font(.title2)
                             .foregroundColor(AppTheme.accentEmerald)
                     } else {
                         Button("Allow") {
@@ -90,6 +92,7 @@ struct PermissionRequestSheet: View {
                     
                     if permissionManager.hasContactAccess {
                         Image(systemName: "checkmark.circle.fill")
+                            .font(.title2)
                             .foregroundColor(AppTheme.accentEmerald)
                     } else {
                         Button("Allow") {
@@ -125,6 +128,7 @@ struct PermissionRequestSheet: View {
             
             Button("Continue") {
                 dismiss()
+                onDismiss?()
             }
             .primaryButtonStyle(bg: AppTheme.accentEmerald)
             .padding(.horizontal, 20)
