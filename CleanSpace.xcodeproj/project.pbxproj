@@ -25,7 +25,6 @@
 		68E29F90807112E442F9EB99 /* StorageInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CCEB8F38544866FA9D1582 /* StorageInfo.swift */; };
 		7516F0C3CC673FD3551B1515 /* VideoItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 857ABC4E9B7478F29124FE87 /* VideoItem.swift */; };
 		7CFDA8445A41A41D72834342 /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920C2AD4FCBFDDFABAFEC6D1 /* StorageService.swift */; };
-		8424D660CCA0E622AF29C2EC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6B511B92F3C713CBC9D39FC7 /* Assets.xcassets */; };
 		8594532B48CA84FCA6F5D4EC /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6E00D229179FD273BD13E9 /* DashboardView.swift */; };
 		8C9DE4A80411975458F1D62A /* SpaceFreedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41775C1ABC497C5D3972D438 /* SpaceFreedView.swift */; };
 		9F4121BEF3196CEBB8B254E9 /* ContactGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C0EBA54143F6AE7960AC4C /* ContactGroup.swift */; };
@@ -52,7 +51,6 @@
 		6093BF448CFA9F13BFCB5DAC /* SimilarPhotosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarPhotosView.swift; sourceTree = "<group>"; };
 		66CCEB8F38544866FA9D1582 /* StorageInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageInfo.swift; sourceTree = "<group>"; };
 		68127EAD9C526EA5F4A6E0C9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		6B511B92F3C713CBC9D39FC7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6F861FEEBD61DD794297E338 /* PermissionBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionBannerView.swift; sourceTree = "<group>"; };
 		74458010E46C5B4399151685 /* CategoryCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryCardView.swift; sourceTree = "<group>"; };
 		7D97A699597A1FEC096C6E22 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
@@ -232,7 +230,6 @@
 		F43B63BEE09ADD3B29B8F329 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				6B511B92F3C713CBC9D39FC7 /* Assets.xcassets */,
 				68127EAD9C526EA5F4A6E0C9 /* Info.plist */,
 			);
 			path = Resources;
@@ -263,7 +260,6 @@
 			buildConfigurationList = 86920A7A71DEF259450C46F5 /* Build configuration list for PBXNativeTarget "CleanSpace" */;
 			buildPhases = (
 				B73C8FEF660F5F3FB5C9B60D /* Sources */,
-				4B01B38BE8655156A166996A /* Resources */,
 			);
 			buildRules = (
 			);
@@ -305,17 +301,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXResourcesBuildPhase section */
-		4B01B38BE8655156A166996A /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				8424D660CCA0E622AF29C2EC /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B73C8FEF660F5F3FB5C9B60D /* Sources */ = {

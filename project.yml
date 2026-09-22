@@ -23,6 +23,7 @@ targets:
       - path: CleanSpace
         excludes:
           - "**/.DS_Store"
+          - "Resources/Assets.xcassets"
     settings:
       base:
         PRODUCT_NAME: CleanSpace
