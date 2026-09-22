@@ -36,8 +36,8 @@ struct PHAssetThumbnailView: View {
         let manager = PHImageManager.default()
         let options = PHImageRequestOptions()
         options.isNetworkAccessAllowed = true
-        options.deliveryMode = .opportunistic
-        options.resizeMode = .fast
+        options.deliveryMode = .fastFormat
+        options.resizeMode = .none
         
         manager.requestImage(
             for: asset,
@@ -47,6 +47,17 @@ struct PHAssetThumbnailView: View {
         ) { fetchedImage, _ in
             if let fetchedImage = fetchedImage {
                 self.image = fetchedImage
+            } else {
+                // Direct data fallback
+                let dataOptions = PHImageRequestOptions()
+                dataOptions.isNetworkAccessAllowed = true
+                manager.requestImageDataAndOrientation(for: asset, options: dataOptions) { data, _, _, _ in
+                    if let data = data, let img = UIImage(data: data) {
+                        DispatchQueue.main.async {
+                            self.image = img
+                        }
+                    }
+                }
             }
         }
     }

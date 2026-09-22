@@ -59,7 +59,7 @@ final class PhotoSimilarityService: @unchecked Sendable {
             candidateClusters.append(bucket)
         }
         
-        // If library has 50 or fewer photos (typical on simulator or small test albums), also compare all
+        // If library has 50 or fewer photos (typical on simulator or small test albums), compare all
         if photos.count <= 50 {
             candidateClusters.append(photos)
         }
@@ -84,7 +84,6 @@ final class PhotoSimilarityService: @unchecked Sendable {
         var resultGroups: [PhotoGroup] = []
         var groupedAssetIds = Set<String>()
         
-        let targetSize = CGSize(width: 100, height: 100)
         var processedCount = 0
         
         for cluster in uniqueClusters {
@@ -99,7 +98,7 @@ final class PhotoSimilarityService: @unchecked Sendable {
             var items: [(asset: PHAsset, fingerprint: [UInt8], score: Double)] = []
             
             for asset in activeCluster {
-                if let image = await self.requestThumbnail(for: asset, targetSize: targetSize) {
+                if let image = await self.requestImageSafe(for: asset) {
                     let fingerprint = self.computePerceptualHash(from: image)
                     let score = self.calculateBestScore(asset: asset)
                     items.append((asset, fingerprint, score))
@@ -150,22 +149,23 @@ final class PhotoSimilarityService: @unchecked Sendable {
         return resultGroups
     }
     
-    /// Requests thumbnail safely via async continuation with single-resume guarantee
-    private func requestThumbnail(for asset: PHAsset, targetSize: CGSize) async -> UIImage? {
-        await withCheckedContinuation { continuation in
+    /// Requests image using PHImageManager with PHImageManagerMaximumSize fallback to requestImageDataAndOrientation
+    private func requestImageSafe(for asset: PHAsset) async -> UIImage? {
+        // Try method 1: Standard PHImageManager with PHImageManagerMaximumSize
+        let fromManager: UIImage? = await withCheckedContinuation { continuation in
             var hasResumed = false
             let lock = NSLock()
             
             let options = PHImageRequestOptions()
             options.deliveryMode = .fastFormat
-            options.resizeMode = .fast
+            options.resizeMode = .none
             options.isNetworkAccessAllowed = true
             options.isSynchronous = false
             
             imageManager.requestImage(
                 for: asset,
-                targetSize: targetSize,
-                contentMode: .aspectFill,
+                targetSize: PHImageManagerMaximumSize,
+                contentMode: .aspectFit,
                 options: options
             ) { image, _ in
                 lock.lock()
@@ -173,6 +173,33 @@ final class PhotoSimilarityService: @unchecked Sendable {
                 if !hasResumed {
                     hasResumed = true
                     continuation.resume(returning: image)
+                }
+            }
+        }
+        
+        if let img = fromManager {
+            return img
+        }
+        
+        // Fallback method 2: Direct image data (bypasses all request spec bugs on Simulator!)
+        return await withCheckedContinuation { continuation in
+            var hasResumed = false
+            let lock = NSLock()
+            
+            let options = PHImageRequestOptions()
+            options.isNetworkAccessAllowed = true
+            options.isSynchronous = false
+            
+            imageManager.requestImageDataAndOrientation(for: asset, options: options) { data, _, _, _ in
+                lock.lock()
+                defer { lock.unlock() }
+                if !hasResumed {
+                    hasResumed = true
+                    if let data = data, let image = UIImage(data: data) {
+                        continuation.resume(returning: image)
+                    } else {
+                        continuation.resume(returning: nil)
+                    }
                 }
             }
         }
