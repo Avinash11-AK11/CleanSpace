@@ -79,21 +79,7 @@ struct SimilarPhotosView: View {
                                 .foregroundColor(AppTheme.accentEmerald)
                         }
                         Spacer()
-                        NavigationLink(destination: ReviewView {
-                            // After deletion, remove deleted items from the local groups
-                            withAnimation {
-                                var newGroups: [PhotoGroup] = []
-                                for group in groups {
-                                    let remainingPhotos = group.photos.filter { !cleanupManager.selectedPhotoIds.contains($0.id) }
-                                    if remainingPhotos.count >= 2 {
-                                        var updatedGroup = group
-                                        updatedGroup.photos = remainingPhotos
-                                        newGroups.append(updatedGroup)
-                                    }
-                                }
-                                groups = newGroups
-                            }
-                        }) {
+                        NavigationLink(destination: ReviewView()) {
                             Text("Review Cleanup")
                                 .font(.subheadline)
                                 .fontWeight(.bold)
@@ -113,6 +99,31 @@ struct SimilarPhotosView: View {
         .background(AppTheme.primaryBackground)
         .navigationTitle("Similar Photos")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            syncDeletedPhotos()
+        }
+        .onChange(of: cleanupManager.deletedAssetIds) {
+            syncDeletedPhotos()
+        }
+    }
+    
+    private func syncDeletedPhotos() {
+        guard !cleanupManager.deletedAssetIds.isEmpty else { return }
+        withAnimation {
+            var updatedGroups: [PhotoGroup] = []
+            for group in groups {
+                let remaining = group.photos.filter { !cleanupManager.deletedAssetIds.contains($0.id) }
+                if remaining.count >= 2 {
+                    var updated = group
+                    updated.photos = remaining
+                    if let best = updated.recommendedBestId, !remaining.contains(where: { $0.id == best }) {
+                        updated.recommendedBestId = remaining.first?.id
+                    }
+                    updatedGroups.append(updated)
+                }
+            }
+            groups = updatedGroups
+        }
     }
 }
 

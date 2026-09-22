@@ -2,7 +2,7 @@ import SwiftUI
 import Contacts
 
 struct DuplicateContactsView: View {
-    @State var groups: [ContactGroup]
+    @Binding var groups: [ContactGroup]
     @ObservedObject private var cleanupManager = CleanupManager.shared
     @State private var isMerging = false
     @State private var mergeAlertMessage: String?
@@ -90,10 +90,35 @@ struct DuplicateContactsView: View {
         .background(AppTheme.primaryBackground)
         .navigationTitle("Duplicate Contacts")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            syncDeletedContacts()
+        }
+        .onChange(of: cleanupManager.deletedContactIds) {
+            syncDeletedContacts()
+        }
         .alert("Contact Merge", isPresented: $showMergeAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(mergeAlertMessage ?? "")
+        }
+    }
+    
+    private func syncDeletedContacts() {
+        guard !cleanupManager.deletedContactIds.isEmpty else { return }
+        withAnimation {
+            var updatedGroups: [ContactGroup] = []
+            for group in groups {
+                let remaining = group.contacts.filter { !cleanupManager.deletedContactIds.contains($0.id) }
+                if remaining.count >= 2 {
+                    var updated = group
+                    updated.contacts = remaining
+                    if let keep = updated.recommendedKeepId, !remaining.contains(where: { $0.id == keep }) {
+                        updated.recommendedKeepId = remaining.first?.id
+                    }
+                    updatedGroups.append(updated)
+                }
+            }
+            groups = updatedGroups
         }
     }
     

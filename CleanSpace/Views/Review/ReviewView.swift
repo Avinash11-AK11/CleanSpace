@@ -94,10 +94,10 @@ struct ReviewView: View {
                             }
                         }
                         
-                        // Large Videos
+                        // Large & Duplicate Videos
                         if !cleanupManager.selectedVideoIds.isEmpty {
                             ReviewCategoryRow(
-                                title: "Large Videos",
+                                title: "Videos",
                                 count: cleanupManager.selectedVideoIds.count,
                                 sizeText: ByteCountFormatter.string(fromByteCount: cleanupManager.selectedVideoIds.compactMap { cleanupManager.allVideosMap[$0]?.fileSize }.reduce(0, +), countStyle: .file),
                                 icon: "film.stack",
@@ -180,6 +180,7 @@ struct ReviewView: View {
         .navigationDestination(isPresented: $navigateToSpaceFreed) {
             SpaceFreedView {
                 onCleanupFinished?()
+                dismiss()
             }
         }
     }
@@ -196,6 +197,12 @@ struct ReviewView: View {
             let allAssetsToDelete = photosToDelete + screenshotsToDelete + videosToDelete
             
             let contactsToDelete = cleanupManager.selectedContactIds.compactMap { cleanupManager.allContactsMap[$0]?.contact }
+            
+            let freedPhotoIds = cleanupManager.selectedPhotoIds
+            let freedScreenshotIds = cleanupManager.selectedScreenshotIds
+            let freedVideoIds = cleanupManager.selectedVideoIds
+            let freedContactIds = cleanupManager.selectedContactIds
+            let allFreedAssetIds = freedPhotoIds.union(freedScreenshotIds).union(freedVideoIds)
             
             let freedBytes = cleanupManager.totalEstimatedBytes
             let freedCount = cleanupManager.totalSelectedCount
@@ -218,12 +225,13 @@ struct ReviewView: View {
                 deletionProgress = 1.0
                 deletionStatus = "Done!"
                 
-                // Save freed statistics
+                // Save freed statistics and notify live tracking
                 cleanupManager.lastFreedBytes = freedBytes
                 cleanupManager.lastFreedItemCount = freedCount
+                cleanupManager.recordDeletedItems(assetIds: allFreedAssetIds, contactIds: freedContactIds)
                 cleanupManager.clearAllSelections()
                 
-                try? await Task.sleep(nanoseconds: 400_000_000)
+                try? await Task.sleep(nanoseconds: 300_000_000)
                 isDeleting = false
                 navigateToSpaceFreed = true
                 

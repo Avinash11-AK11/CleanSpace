@@ -1,6 +1,5 @@
 import Foundation
 import Photos
-import Vision
 import UIKit
 
 final class PhotoSimilarityService: @unchecked Sendable {
@@ -11,10 +10,10 @@ final class PhotoSimilarityService: @unchecked Sendable {
     private init() {}
     
     /// Finds groups of similar or duplicate photos.
-    /// Uses a robust multi-strategy approach:
-    /// Strategy 1: Burst / Time-proximity clustering (photos taken within 60s)
-    /// Strategy 2: Dimension clustering (matching aspect ratio & resolution)
-    /// Strategy 3: Visual perceptual similarity using normalized luminance fingerprints + color histograms
+    /// Multi-pass clustering:
+    /// Pass 1: Time proximity & aspect ratio buckets
+    /// Pass 2: High-dimensional RGB + luminance spatial perceptual hashing
+    /// Strict 0.93 threshold ensures different images (even with similar color palettes) are not falsely grouped.
     func findSimilarGroups(
         photos: [PHAsset],
         progressHandler: (@Sendable (Double, String) -> Void)? = nil
@@ -26,14 +25,14 @@ final class PhotoSimilarityService: @unchecked Sendable {
         // Pass 1: Build candidate clusters
         var candidateClusters: [[PHAsset]] = []
         
-        // Cluster by time window (bursts or close shots within 60s)
+        // Cluster by time window (bursts or close shots within 45s)
         let sortedByDate = photos.sorted { ($0.creationDate ?? .distantPast) < ($1.creationDate ?? .distantPast) }
         var timeCluster: [PHAsset] = []
         for photo in sortedByDate {
             guard let currentDate = photo.creationDate else { continue }
             if let last = timeCluster.last, let lastDate = last.creationDate {
                 let interval = abs(currentDate.timeIntervalSince(lastDate))
-                if interval <= 60.0 {
+                if interval <= 45.0 {
                     timeCluster.append(photo)
                 } else {
                     if timeCluster.count >= 2 {
@@ -49,7 +48,7 @@ final class PhotoSimilarityService: @unchecked Sendable {
             candidateClusters.append(timeCluster)
         }
         
-        // Also cluster photos with identical aspect ratios & resolutions (e.g. imported or duplicate files)
+        // Also cluster photos with identical aspect ratios & resolutions
         var dimensionBuckets: [String: [PHAsset]] = [:]
         for photo in photos {
             let key = "\(photo.pixelWidth)x\(photo.pixelHeight)"
@@ -59,12 +58,12 @@ final class PhotoSimilarityService: @unchecked Sendable {
             candidateClusters.append(bucket)
         }
         
-        // If library has 50 or fewer photos (typical on simulator or small test albums), compare all
+        // If library is small (<= 50 photos), also include all photos for exhaustive comparison
         if photos.count <= 50 {
             candidateClusters.append(photos)
         }
         
-        // Deduplicate clusters to avoid redundant work
+        // Deduplicate clusters
         var seenClusterSets = Set<Set<String>>()
         var uniqueClusters: [[PHAsset]] = []
         for cluster in candidateClusters {
@@ -83,7 +82,6 @@ final class PhotoSimilarityService: @unchecked Sendable {
         
         var resultGroups: [PhotoGroup] = []
         var groupedAssetIds = Set<String>()
-        
         var processedCount = 0
         
         for cluster in uniqueClusters {
@@ -95,13 +93,14 @@ final class PhotoSimilarityService: @unchecked Sendable {
             guard activeCluster.count >= 2 else { continue }
             
             // Extract lightweight feature fingerprints for this cluster
-            var items: [(asset: PHAsset, fingerprint: [UInt8], score: Double)] = []
+            var items: [(asset: PHAsset, fingerprint: [UInt8], score: Double, aspectRatio: Double)] = []
             
             for asset in activeCluster {
                 if let image = await self.requestImageSafe(for: asset) {
                     let fingerprint = self.computePerceptualHash(from: image)
                     let score = self.calculateBestScore(asset: asset)
-                    items.append((asset, fingerprint, score))
+                    let ar = Double(asset.pixelWidth) / max(1.0, Double(asset.pixelHeight))
+                    items.append((asset, fingerprint, score, ar))
                 }
             }
             
@@ -118,9 +117,13 @@ final class PhotoSimilarityService: @unchecked Sendable {
                 for j in (i + 1)..<items.count {
                     if visited.contains(j) { continue }
                     
+                    // Reject if aspect ratio differs by more than 10%
+                    let arDiff = abs(items[i].aspectRatio - items[j].aspectRatio)
+                    if arDiff > 0.10 { continue }
+                    
                     let similarity = self.compareFingerprints(items[i].fingerprint, items[j].fingerprint)
-                    // Strict 0.90 threshold to prevent distinct photos from being falsely grouped
-                    if similarity >= 0.90 {
+                    // High precision 0.93 threshold prevents false positives between different images
+                    if similarity >= 0.93 {
                         visited.insert(j)
                         groupAssets.append(items[j].asset)
                         if items[j].score > bestScore {
@@ -149,7 +152,7 @@ final class PhotoSimilarityService: @unchecked Sendable {
         return resultGroups
     }
     
-    /// Requests image using PHImageManager with PHImageManagerMaximumSize fallback to requestImageDataAndOrientation
+    /// Requests image using PHImageManager with fallback to requestImageDataAndOrientation
     private func requestImageSafe(for asset: PHAsset) async -> UIImage? {
         let fromManager: UIImage? = await withCheckedContinuation { continuation in
             var hasResumed = false
@@ -203,8 +206,7 @@ final class PhotoSimilarityService: @unchecked Sendable {
         }
     }
     
-    /// Generates a rich 16x16 perceptual RGB vector (768 values: R, G, B channels)
-    /// Capturing color distributions prevents completely different scenes from false-positive matches!
+    /// Generates a rich 16x16 perceptual RGB vector (768 values)
     private func computePerceptualHash(from image: UIImage) -> [UInt8] {
         guard let cgImage = image.cgImage else {
             let renderer = UIGraphicsImageRenderer(size: CGSize(width: 16, height: 16))

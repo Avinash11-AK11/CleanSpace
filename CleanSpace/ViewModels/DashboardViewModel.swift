@@ -14,12 +14,14 @@ final class DashboardViewModel: ObservableObject {
     @Published var similarPhotoGroups: [PhotoGroup] = []
     @Published var screenshots: [PhotoItem] = []
     @Published var largeVideos: [VideoItem] = []
+    @Published var duplicateVideoGroups: [VideoGroup] = []
     @Published var duplicateContactGroups: [ContactGroup] = []
     
     // Computed cleanable estimates
     @Published var cleanablePhotoBytes: Int64 = 0
     @Published var cleanableScreenshotBytes: Int64 = 0
     @Published var cleanableVideoBytes: Int64 = 0
+    @Published var cleanableDuplicateVideoBytes: Int64 = 0
     
     var totalCleanableBytes: Int64 {
         cleanablePhotoBytes + cleanableScreenshotBytes + cleanableVideoBytes
@@ -82,16 +84,21 @@ final class DashboardViewModel: ObservableObject {
             }
             print("CleanSpace: Found \(groups.count) similar photo groups")
             
-            // 3. Large Videos
-            currentTask = "Scanning for large videos..."
+            // 3. Large & Duplicate Videos
+            currentTask = "Scanning for large and duplicate videos..."
             scanProgress = 0.7
             let videos = VideoScanner.shared.fetchLargeVideos()
             self.largeVideos = videos
             self.cleanableVideoBytes = videos.reduce(0) { $0 + $1.fileSize }
+            
+            let dupVideos = VideoScanner.shared.findDuplicateVideoGroups(videos: videos)
+            self.duplicateVideoGroups = dupVideos
+            self.cleanableDuplicateVideoBytes = dupVideos.reduce(0) { $0 + $1.cleanableSize }
+            
             for video in videos {
                 CleanupManager.shared.allVideosMap[video.id] = video
             }
-            print("CleanSpace: Fetched \(videos.count) large videos")
+            print("CleanSpace: Fetched \(videos.count) videos and \(dupVideos.count) duplicate video groups")
         } else {
             print("CleanSpace: Photo access not granted (status = \(permissions.photoStatus.rawValue))")
         }

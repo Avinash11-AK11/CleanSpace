@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ScreenshotsView: View {
-    @State var screenshots: [PhotoItem]
+    @Binding var screenshots: [PhotoItem]
     @ObservedObject private var cleanupManager = CleanupManager.shared
     
     private let columns = [
@@ -131,11 +131,7 @@ struct ScreenshotsView: View {
                                 .foregroundColor(AppTheme.accentEmerald)
                         }
                         Spacer()
-                        NavigationLink(destination: ReviewView {
-                            withAnimation {
-                                screenshots.removeAll { cleanupManager.selectedScreenshotIds.contains($0.id) }
-                            }
-                        }) {
+                        NavigationLink(destination: ReviewView()) {
                             Text("Review Cleanup")
                                 .font(.subheadline)
                                 .fontWeight(.bold)
@@ -155,5 +151,18 @@ struct ScreenshotsView: View {
         .background(AppTheme.primaryBackground)
         .navigationTitle("Screenshots")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            syncDeletedScreenshots()
+        }
+        .onChange(of: cleanupManager.deletedAssetIds) {
+            syncDeletedScreenshots()
+        }
+    }
+    
+    private func syncDeletedScreenshots() {
+        guard !cleanupManager.deletedAssetIds.isEmpty else { return }
+        withAnimation {
+            screenshots.removeAll { cleanupManager.deletedAssetIds.contains($0.id) }
+        }
     }
 }

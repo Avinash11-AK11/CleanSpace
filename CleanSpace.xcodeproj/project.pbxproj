@@ -24,6 +24,7 @@
 		67AB2834F23CF22B82A5438A /* LargeVideosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2462C763B45FFD88838314E7 /* LargeVideosView.swift */; };
 		68E29F90807112E442F9EB99 /* StorageInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CCEB8F38544866FA9D1582 /* StorageInfo.swift */; };
 		7516F0C3CC673FD3551B1515 /* VideoItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 857ABC4E9B7478F29124FE87 /* VideoItem.swift */; };
+		7A465EE9876658645B7F5454 /* VideoGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11044D54E7F41B0E48CC0E9C /* VideoGroup.swift */; };
 		7CFDA8445A41A41D72834342 /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920C2AD4FCBFDDFABAFEC6D1 /* StorageService.swift */; };
 		8594532B48CA84FCA6F5D4EC /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6E00D229179FD273BD13E9 /* DashboardView.swift */; };
 		8C9DE4A80411975458F1D62A /* SpaceFreedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41775C1ABC497C5D3972D438 /* SpaceFreedView.swift */; };
@@ -43,6 +44,7 @@
 /* Begin PBXFileReference section */
 		0A6E00D229179FD273BD13E9 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		0E210164132262EF1FEB69D8 /* DuplicateContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateContactsView.swift; sourceTree = "<group>"; };
+		11044D54E7F41B0E48CC0E9C /* VideoGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoGroup.swift; sourceTree = "<group>"; };
 		14C0EBA54143F6AE7960AC4C /* ContactGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactGroup.swift; sourceTree = "<group>"; };
 		1B7D58EEBCB94701D8D1B0FA /* ReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewView.swift; sourceTree = "<group>"; };
 		2462C763B45FFD88838314E7 /* LargeVideosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LargeVideosView.swift; sourceTree = "<group>"; };
@@ -111,6 +113,7 @@
 				DE86D75F191B18089271ABBF /* PhotoGroup.swift */,
 				8BAA82EF1113E7942BBFF74E /* PhotoItem.swift */,
 				66CCEB8F38544866FA9D1582 /* StorageInfo.swift */,
+				11044D54E7F41B0E48CC0E9C /* VideoGroup.swift */,
 				857ABC4E9B7478F29124FE87 /* VideoItem.swift */,
 			);
 			path = Models;
@@ -336,6 +339,7 @@
 				11033332EC906A99EC94691B /* StorageGaugeView.swift in Sources */,
 				68E29F90807112E442F9EB99 /* StorageInfo.swift in Sources */,
 				7CFDA8445A41A41D72834342 /* StorageService.swift in Sources */,
+				7A465EE9876658645B7F5454 /* VideoGroup.swift in Sources */,
 				7516F0C3CC673FD3551B1515 /* VideoItem.swift in Sources */,
 				361EA4D44E7084EE8F0B69AF /* VideoScanner.swift in Sources */,
 			);

@@ -13,6 +13,10 @@ final class CleanupManager: ObservableObject {
     @Published var selectedVideoIds: Set<String> = []
     @Published var selectedContactIds: Set<String> = []
     
+    // Live tracking of deleted items to sync across all open views
+    @Published var deletedAssetIds: Set<String> = []
+    @Published var deletedContactIds: Set<String> = []
+    
     // Cached item maps for fast lookup and summary computation
     var allPhotosMap: [String: PhotoItem] = [:]
     var allScreenshotsMap: [String: PhotoItem] = [:]
@@ -86,6 +90,20 @@ final class CleanupManager: ObservableObject {
         selectedPhotoIds.removeAll()
     }
     
+    func selectAllDuplicateVideosExcludingBest(groups: [VideoGroup]) {
+        for group in groups {
+            guard let bestId = group.recommendedBestId else { continue }
+            for video in group.videos where video.id != bestId {
+                selectedVideoIds.insert(video.id)
+                allVideosMap[video.id] = video
+            }
+        }
+    }
+    
+    func deselectAllVideos() {
+        selectedVideoIds.removeAll()
+    }
+    
     var totalSelectedCount: Int {
         selectedPhotoIds.count + selectedScreenshotIds.count + selectedVideoIds.count + selectedContactIds.count
     }
@@ -101,20 +119,19 @@ final class CleanupManager: ObservableObject {
         ByteCountFormatter.string(fromByteCount: totalEstimatedBytes, countStyle: .file)
     }
     
-    func summary() -> CleanupSummary {
-        let photoBytes = selectedPhotoIds.compactMap { allPhotosMap[$0]?.fileSize }.reduce(0, +)
-        let screenshotBytes = selectedScreenshotIds.compactMap { allScreenshotsMap[$0]?.fileSize }.reduce(0, +)
-        let videoBytes = selectedVideoIds.compactMap { allVideosMap[$0]?.fileSize }.reduce(0, +)
+    func recordDeletedItems(assetIds: Set<String>, contactIds: Set<String>) {
+        deletedAssetIds.formUnion(assetIds)
+        deletedContactIds.formUnion(contactIds)
         
-        return CleanupSummary(
-            photoCount: selectedPhotoIds.count,
-            photoBytes: photoBytes,
-            screenshotCount: selectedScreenshotIds.count,
-            screenshotBytes: screenshotBytes,
-            videoCount: selectedVideoIds.count,
-            videoBytes: videoBytes,
-            contactCount: selectedContactIds.count
-        )
+        // Remove from maps
+        for id in assetIds {
+            allPhotosMap.removeValue(forKey: id)
+            allScreenshotsMap.removeValue(forKey: id)
+            allVideosMap.removeValue(forKey: id)
+        }
+        for id in contactIds {
+            allContactsMap.removeValue(forKey: id)
+        }
     }
     
     func clearAllSelections() {

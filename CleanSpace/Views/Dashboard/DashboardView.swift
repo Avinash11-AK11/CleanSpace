@@ -6,7 +6,6 @@ struct DashboardView: View {
     @ObservedObject private var permissionManager = PermissionManager.shared
     
     @State private var showPermissionSheet = false
-    @State private var navigateToReview = false
     
     var body: some View {
         NavigationStack {
@@ -84,7 +83,7 @@ struct DashboardView: View {
                             .padding(.horizontal)
                             
                             // 2. Screenshots
-                            NavigationLink(destination: ScreenshotsView(screenshots: viewModel.screenshots)) {
+                            NavigationLink(destination: ScreenshotsView(screenshots: $viewModel.screenshots)) {
                                 CategoryCardView(
                                     title: "Screenshots",
                                     subtitle: "\(viewModel.screenshots.count) items",
@@ -96,12 +95,12 @@ struct DashboardView: View {
                             .buttonStyle(PlainButtonStyle())
                             .padding(.horizontal)
                             
-                            // 3. Large Videos
-                            NavigationLink(destination: LargeVideosView(videos: viewModel.largeVideos)) {
+                            // 3. Videos & Duplicates
+                            NavigationLink(destination: LargeVideosView(videos: $viewModel.largeVideos, duplicateGroups: $viewModel.duplicateVideoGroups)) {
                                 CategoryCardView(
-                                    title: "Large Videos",
-                                    subtitle: "\(viewModel.largeVideos.count) videos",
-                                    badgeText: viewModel.cleanableVideoBytes > 0 ? ByteCountFormatter.string(fromByteCount: viewModel.cleanableVideoBytes, countStyle: .file) : nil,
+                                    title: "Videos & Duplicates",
+                                    subtitle: viewModel.duplicateVideoGroups.isEmpty ? "\(viewModel.largeVideos.count) videos" : "\(viewModel.largeVideos.count) videos • \(viewModel.duplicateVideoGroups.count) duplicate groups",
+                                    badgeText: viewModel.cleanableDuplicateVideoBytes > 0 ? ByteCountFormatter.string(fromByteCount: viewModel.cleanableDuplicateVideoBytes, countStyle: .file) : (viewModel.cleanableVideoBytes > 0 ? ByteCountFormatter.string(fromByteCount: viewModel.cleanableVideoBytes, countStyle: .file) : nil),
                                     iconName: "film.stack",
                                     iconColor: AppTheme.accentOrange
                                 )
@@ -110,7 +109,7 @@ struct DashboardView: View {
                             .padding(.horizontal)
                             
                             // 4. Duplicate Contacts
-                            NavigationLink(destination: DuplicateContactsView(groups: viewModel.duplicateContactGroups)) {
+                            NavigationLink(destination: DuplicateContactsView(groups: $viewModel.duplicateContactGroups)) {
                                 CategoryCardView(
                                     title: "Duplicate Contacts",
                                     subtitle: "\(viewModel.duplicateContactGroups.count) potential duplicates",
@@ -198,6 +197,11 @@ struct DashboardView: View {
                     }
                 }
                 .presentationDetents([.fraction(0.7)])
+            }
+            .onChange(of: cleanupManager.deletedAssetIds) {
+                Task {
+                    viewModel.refreshStorage()
+                }
             }
         }
     }
