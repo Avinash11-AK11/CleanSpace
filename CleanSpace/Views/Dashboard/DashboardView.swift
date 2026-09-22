@@ -71,7 +71,7 @@ struct DashboardView: View {
                                 .padding(.horizontal)
                             
                             // 1. Similar Photos
-                            NavigationLink(destination: SimilarPhotosView(groups: viewModel.similarPhotoGroups)) {
+                            NavigationLink(destination: SimilarPhotosView(groups: $viewModel.similarPhotoGroups)) {
                                 CategoryCardView(
                                     title: "Similar & Duplicate Photos",
                                     subtitle: "\(viewModel.similarPhotoGroups.count) groups found",
@@ -157,7 +157,11 @@ struct DashboardView: View {
                             
                             Spacer()
                             
-                            NavigationLink(destination: ReviewView()) {
+                            NavigationLink(destination: ReviewView {
+                                Task {
+                                    await viewModel.startFullScan()
+                                }
+                            }) {
                                 HStack(spacing: 6) {
                                     Text("Review & Clean")
                                     Image(systemName: "arrow.right")

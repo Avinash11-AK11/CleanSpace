@@ -3,6 +3,7 @@ import SwiftUI
 struct SpaceFreedView: View {
     @ObservedObject private var cleanupManager = CleanupManager.shared
     @Environment(\.dismiss) private var dismiss
+    var onDone: (() -> Void)? = nil
     
     var body: some View {
         VStack(spacing: 28) {
@@ -63,6 +64,7 @@ struct SpaceFreedView: View {
             
             Button("Done") {
                 dismiss()
+                onDone?()
             }
             .primaryButtonStyle(bg: AppTheme.accentEmerald)
             .padding(.horizontal, 20)

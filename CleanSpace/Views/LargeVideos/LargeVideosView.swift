@@ -3,7 +3,7 @@ import Photos
 import AVKit
 
 struct LargeVideosView: View {
-    let videos: [VideoItem]
+    @State var videos: [VideoItem]
     @ObservedObject private var cleanupManager = CleanupManager.shared
     @State private var previewVideoAsset: PHAsset?
     @State private var previewPlayer: AVPlayer?
@@ -145,7 +145,11 @@ struct LargeVideosView: View {
                                 .foregroundColor(AppTheme.accentEmerald)
                         }
                         Spacer()
-                        NavigationLink(destination: ReviewView()) {
+                        NavigationLink(destination: ReviewView {
+                            withAnimation {
+                                videos.removeAll { cleanupManager.selectedVideoIds.contains($0.id) }
+                            }
+                        }) {
                             Text("Review Cleanup")
                                 .font(.subheadline)
                                 .fontWeight(.bold)

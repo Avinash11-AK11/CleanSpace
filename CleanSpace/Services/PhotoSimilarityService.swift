@@ -14,7 +14,7 @@ final class PhotoSimilarityService: @unchecked Sendable {
     /// Uses a robust multi-strategy approach:
     /// Strategy 1: Burst / Time-proximity clustering (photos taken within 60s)
     /// Strategy 2: Dimension clustering (matching aspect ratio & resolution)
-    /// Strategy 3: Visual perceptual similarity using CGContext bitmap sampling
+    /// Strategy 3: Visual perceptual similarity using normalized luminance fingerprints + color histograms
     func findSimilarGroups(
         photos: [PHAsset],
         progressHandler: (@Sendable (Double, String) -> Void)? = nil
@@ -119,8 +119,8 @@ final class PhotoSimilarityService: @unchecked Sendable {
                     if visited.contains(j) { continue }
                     
                     let similarity = self.compareFingerprints(items[i].fingerprint, items[j].fingerprint)
-                    // 0.80 threshold allows for similar shots and duplicate detection
-                    if similarity >= 0.80 {
+                    // Strict 0.90 threshold to prevent distinct photos from being falsely grouped
+                    if similarity >= 0.90 {
                         visited.insert(j)
                         groupAssets.append(items[j].asset)
                         if items[j].score > bestScore {
@@ -138,7 +138,7 @@ final class PhotoSimilarityService: @unchecked Sendable {
                     let group = PhotoGroup(
                         photos: photoItems,
                         recommendedBestId: bestAsset.localIdentifier,
-                        similarityScore: 0.94
+                        similarityScore: 0.96
                     )
                     resultGroups.append(group)
                 }
@@ -151,7 +151,6 @@ final class PhotoSimilarityService: @unchecked Sendable {
     
     /// Requests image using PHImageManager with PHImageManagerMaximumSize fallback to requestImageDataAndOrientation
     private func requestImageSafe(for asset: PHAsset) async -> UIImage? {
-        // Try method 1: Standard PHImageManager with PHImageManagerMaximumSize
         let fromManager: UIImage? = await withCheckedContinuation { continuation in
             var hasResumed = false
             let lock = NSLock()
@@ -181,7 +180,6 @@ final class PhotoSimilarityService: @unchecked Sendable {
             return img
         }
         
-        // Fallback method 2: Direct image data (bypasses all request spec bugs on Simulator!)
         return await withCheckedContinuation { continuation in
             var hasResumed = false
             let lock = NSLock()
@@ -205,7 +203,8 @@ final class PhotoSimilarityService: @unchecked Sendable {
         }
     }
     
-    /// Generates a reliable 16x16 grayscale perceptual vector using direct CoreGraphics bitmap context
+    /// Generates a rich 16x16 perceptual RGB vector (768 values: R, G, B channels)
+    /// Capturing color distributions prevents completely different scenes from false-positive matches!
     private func computePerceptualHash(from image: UIImage) -> [UInt8] {
         guard let cgImage = image.cgImage else {
             let renderer = UIGraphicsImageRenderer(size: CGSize(width: 16, height: 16))
@@ -213,14 +212,14 @@ final class PhotoSimilarityService: @unchecked Sendable {
                 image.draw(in: CGRect(x: 0, y: 0, width: 16, height: 16))
             }
             if let renderedCG = downsampled.cgImage {
-                return extractGrayscaleBytes(from: renderedCG)
+                return extractRGBBytes(from: renderedCG)
             }
-            return [UInt8](repeating: 128, count: 256)
+            return [UInt8](repeating: 128, count: 768)
         }
-        return extractGrayscaleBytes(from: cgImage)
+        return extractRGBBytes(from: cgImage)
     }
     
-    private func extractGrayscaleBytes(from cgImage: CGImage) -> [UInt8] {
+    private func extractRGBBytes(from cgImage: CGImage) -> [UInt8] {
         let width = 16
         let height = 16
         var rawData = [UInt8](repeating: 0, count: width * height * 4)
@@ -236,25 +235,23 @@ final class PhotoSimilarityService: @unchecked Sendable {
             space: colorSpace,
             bitmapInfo: bitmapInfo
         ) else {
-            return [UInt8](repeating: 128, count: 256)
+            return [UInt8](repeating: 128, count: 768)
         }
         
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
         
-        var grayscale: [UInt8] = []
-        grayscale.reserveCapacity(256)
-        for i in 0..<256 {
+        var rgbValues: [UInt8] = []
+        rgbValues.reserveCapacity(width * height * 3)
+        for i in 0..<(width * height) {
             let offset = i * 4
-            let r = UInt32(rawData[offset])
-            let g = UInt32(rawData[offset + 1])
-            let b = UInt32(rawData[offset + 2])
-            let grayValue = (r * 299 + g * 587 + b * 114) / 1000
-            grayscale.append(UInt8(truncatingIfNeeded: grayValue))
+            rgbValues.append(rawData[offset])     // R
+            rgbValues.append(rawData[offset + 1]) // G
+            rgbValues.append(rawData[offset + 2]) // B
         }
-        return grayscale
+        return rgbValues
     }
     
-    /// Compares two 16x16 perceptual hashes, returning similarity 0.0 ... 1.0
+    /// Compares RGB color and luminance perceptual hashes, returning similarity 0.0 ... 1.0
     private func compareFingerprints(_ a: [UInt8], _ b: [UInt8]) -> Double {
         guard a.count == b.count, !a.isEmpty else { return 0.0 }
         var totalDiff: Double = 0

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ScreenshotsView: View {
-    let screenshots: [PhotoItem]
+    @State var screenshots: [PhotoItem]
     @ObservedObject private var cleanupManager = CleanupManager.shared
     
     private let columns = [
@@ -131,7 +131,11 @@ struct ScreenshotsView: View {
                                 .foregroundColor(AppTheme.accentEmerald)
                         }
                         Spacer()
-                        NavigationLink(destination: ReviewView()) {
+                        NavigationLink(destination: ReviewView {
+                            withAnimation {
+                                screenshots.removeAll { cleanupManager.selectedScreenshotIds.contains($0.id) }
+                            }
+                        }) {
                             Text("Review Cleanup")
                                 .font(.subheadline)
                                 .fontWeight(.bold)

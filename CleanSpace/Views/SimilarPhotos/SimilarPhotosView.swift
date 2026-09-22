@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SimilarPhotosView: View {
-    let groups: [PhotoGroup]
+    @Binding var groups: [PhotoGroup]
     @ObservedObject private var cleanupManager = CleanupManager.shared
     
     var body: some View {
@@ -79,7 +79,21 @@ struct SimilarPhotosView: View {
                                 .foregroundColor(AppTheme.accentEmerald)
                         }
                         Spacer()
-                        NavigationLink(destination: ReviewView()) {
+                        NavigationLink(destination: ReviewView {
+                            // After deletion, remove deleted items from the local groups
+                            withAnimation {
+                                var newGroups: [PhotoGroup] = []
+                                for group in groups {
+                                    let remainingPhotos = group.photos.filter { !cleanupManager.selectedPhotoIds.contains($0.id) }
+                                    if remainingPhotos.count >= 2 {
+                                        var updatedGroup = group
+                                        updatedGroup.photos = remainingPhotos
+                                        newGroups.append(updatedGroup)
+                                    }
+                                }
+                                groups = newGroups
+                            }
+                        }) {
                             Text("Review Cleanup")
                                 .font(.subheadline)
                                 .fontWeight(.bold)

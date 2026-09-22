@@ -5,6 +5,7 @@ import Contacts
 struct ReviewView: View {
     @ObservedObject private var cleanupManager = CleanupManager.shared
     @Environment(\.dismiss) private var dismiss
+    var onCleanupFinished: (() -> Void)? = nil
     
     @State private var showConfirmDialog = false
     @State private var isDeleting = false
@@ -169,7 +170,7 @@ struct ReviewView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Photos and videos will be removed from your Photos library via Apple's secure change confirmation dialog. Duplicate contacts will be removed from your address book.")
+            Text("Photos and videos will be removed from your Photos library via Apple's secure confirmation dialog. Duplicate contacts will be removed from your address book.")
         }
         .alert("Cleanup Error", isPresented: $showErrorAlert) {
             Button("OK", role: .cancel) {}
@@ -177,7 +178,9 @@ struct ReviewView: View {
             Text(errorMessage ?? "An unexpected error occurred.")
         }
         .navigationDestination(isPresented: $navigateToSpaceFreed) {
-            SpaceFreedView()
+            SpaceFreedView {
+                onCleanupFinished?()
+            }
         }
     }
     
