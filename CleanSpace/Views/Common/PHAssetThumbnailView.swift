@@ -33,9 +33,9 @@ struct PHAssetThumbnailView: View {
     }
     
     private func loadImage() {
-        let manager = PHCachingImageManager.default()
+        let manager = PHImageManager.default()
         let options = PHImageRequestOptions()
-        options.isNetworkAccessAllowed = false
+        options.isNetworkAccessAllowed = true
         options.deliveryMode = .opportunistic
         options.resizeMode = .fast
         
@@ -45,7 +45,9 @@ struct PHAssetThumbnailView: View {
             contentMode: .aspectFill,
             options: options
         ) { fetchedImage, _ in
-            self.image = fetchedImage
+            if let fetchedImage = fetchedImage {
+                self.image = fetchedImage
+            }
         }
     }
 }

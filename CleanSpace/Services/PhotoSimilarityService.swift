@@ -6,7 +6,7 @@ import UIKit
 final class PhotoSimilarityService: @unchecked Sendable {
     static let shared = PhotoSimilarityService()
     
-    private let imageManager = PHCachingImageManager.default()
+    private let imageManager = PHImageManager.default()
     
     private init() {}
     
@@ -85,12 +85,6 @@ final class PhotoSimilarityService: @unchecked Sendable {
         var groupedAssetIds = Set<String>()
         
         let targetSize = CGSize(width: 100, height: 100)
-        let options = PHImageRequestOptions()
-        options.isSynchronous = true
-        options.deliveryMode = .fastFormat
-        options.resizeMode = .fast
-        options.isNetworkAccessAllowed = true
-        
         var processedCount = 0
         
         for cluster in uniqueClusters {
@@ -105,7 +99,7 @@ final class PhotoSimilarityService: @unchecked Sendable {
             var items: [(asset: PHAsset, fingerprint: [UInt8], score: Double)] = []
             
             for asset in activeCluster {
-                if let image = self.loadThumbnail(for: asset, targetSize: targetSize, options: options) {
+                if let image = await self.requestThumbnail(for: asset, targetSize: targetSize) {
                     let fingerprint = self.computePerceptualHash(from: image)
                     let score = self.calculateBestScore(asset: asset)
                     items.append((asset, fingerprint, score))
@@ -126,8 +120,8 @@ final class PhotoSimilarityService: @unchecked Sendable {
                     if visited.contains(j) { continue }
                     
                     let similarity = self.compareFingerprints(items[i].fingerprint, items[j].fingerprint)
-                    // 0.82 threshold accommodates minor compression, crop, or lighting differences
-                    if similarity >= 0.82 {
+                    // 0.80 threshold allows for similar shots and duplicate detection
+                    if similarity >= 0.80 {
                         visited.insert(j)
                         groupAssets.append(items[j].asset)
                         if items[j].score > bestScore {
@@ -156,12 +150,32 @@ final class PhotoSimilarityService: @unchecked Sendable {
         return resultGroups
     }
     
-    private func loadThumbnail(for asset: PHAsset, targetSize: CGSize, options: PHImageRequestOptions) -> UIImage? {
-        var result: UIImage?
-        imageManager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFill, options: options) { image, _ in
-            result = image
+    /// Requests thumbnail safely via async continuation with single-resume guarantee
+    private func requestThumbnail(for asset: PHAsset, targetSize: CGSize) async -> UIImage? {
+        await withCheckedContinuation { continuation in
+            var hasResumed = false
+            let lock = NSLock()
+            
+            let options = PHImageRequestOptions()
+            options.deliveryMode = .fastFormat
+            options.resizeMode = .fast
+            options.isNetworkAccessAllowed = true
+            options.isSynchronous = false
+            
+            imageManager.requestImage(
+                for: asset,
+                targetSize: targetSize,
+                contentMode: .aspectFill,
+                options: options
+            ) { image, _ in
+                lock.lock()
+                defer { lock.unlock() }
+                if !hasResumed {
+                    hasResumed = true
+                    continuation.resume(returning: image)
+                }
+            }
         }
-        return result
     }
     
     /// Generates a reliable 16x16 grayscale perceptual vector using direct CoreGraphics bitmap context
