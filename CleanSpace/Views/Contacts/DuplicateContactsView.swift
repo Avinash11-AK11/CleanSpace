@@ -2,8 +2,11 @@ import SwiftUI
 import Contacts
 
 struct DuplicateContactsView: View {
-    let groups: [ContactGroup]
+    @State var groups: [ContactGroup]
     @ObservedObject private var cleanupManager = CleanupManager.shared
+    @State private var isMerging = false
+    @State private var mergeAlertMessage: String?
+    @State private var showMergeAlert = false
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -30,7 +33,7 @@ struct DuplicateContactsView: View {
                                 .fontWeight(.semibold)
                                 .foregroundColor(AppTheme.subtleGray)
                             Spacer()
-                            Text("Keep the primary card, remove the rest")
+                            Text("Merge duplicates or select to delete")
                                 .font(.caption2)
                                 .foregroundColor(AppTheme.subtleGray)
                         }
@@ -38,7 +41,9 @@ struct DuplicateContactsView: View {
                         
                         LazyVStack(spacing: 16) {
                             ForEach(groups) { group in
-                                ContactGroupCard(group: group)
+                                ContactGroupCard(group: group) {
+                                    mergeGroup(group)
+                                }
                             }
                         }
                         .padding(.horizontal)
@@ -85,11 +90,45 @@ struct DuplicateContactsView: View {
         .background(AppTheme.primaryBackground)
         .navigationTitle("Duplicate Contacts")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Contact Merge", isPresented: $showMergeAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(mergeAlertMessage ?? "")
+        }
+    }
+    
+    private func mergeGroup(_ group: ContactGroup) {
+        Task {
+            guard let primary = group.contacts.first(where: { $0.id == group.recommendedKeepId }) ?? group.contacts.first else { return }
+            let duplicates = group.contacts.filter { $0.id != primary.id }
+            guard !duplicates.isEmpty else { return }
+            
+            do {
+                try await CleanupService.shared.mergeContacts(
+                    primary: primary.contact,
+                    duplicates: duplicates.map { $0.contact }
+                )
+                withAnimation {
+                    // Remove group from view
+                    groups.removeAll { $0.id == group.id }
+                    // Clear from selection if selected
+                    for d in duplicates {
+                        cleanupManager.selectedContactIds.remove(d.id)
+                    }
+                }
+                mergeAlertMessage = "Successfully merged \(duplicates.count + 1) contacts into '\(primary.fullName)'."
+                showMergeAlert = true
+            } catch {
+                mergeAlertMessage = "Failed to merge contacts: \(error.localizedDescription)"
+                showMergeAlert = true
+            }
+        }
     }
 }
 
 struct ContactGroupCard: View {
     let group: ContactGroup
+    let onMerge: () -> Void
     @ObservedObject private var cleanupManager = CleanupManager.shared
     
     var body: some View {
@@ -106,17 +145,33 @@ struct ContactGroupCard: View {
                 
                 Spacer()
                 
-                Button("Select Duplicates") {
-                    withAnimation {
-                        for contact in group.contacts where contact.id != group.recommendedKeepId {
-                            cleanupManager.selectedContactIds.insert(contact.id)
-                            cleanupManager.allContactsMap[contact.id] = contact
+                HStack(spacing: 12) {
+                    Button(action: onMerge) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.triangle.merge")
+                            Text("Merge")
+                        }
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(AppTheme.accentEmerald.opacity(0.15))
+                        .foregroundColor(AppTheme.accentEmerald)
+                        .clipShape(Capsule())
+                    }
+                    
+                    Button("Select Duplicates") {
+                        withAnimation {
+                            for contact in group.contacts where contact.id != group.recommendedKeepId {
+                                cleanupManager.selectedContactIds.insert(contact.id)
+                                cleanupManager.allContactsMap[contact.id] = contact
+                            }
                         }
                     }
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .foregroundColor(AppTheme.accentBlue)
                 }
-                .font(.caption2)
-                .fontWeight(.bold)
-                .foregroundColor(AppTheme.accentBlue)
             }
             
             Divider()
