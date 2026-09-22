@@ -11,6 +11,7 @@ final class DashboardViewModel: ObservableObject {
     @Published var currentTask: String = ""
     
     // Found cleanup items
+    @Published var allPhotos: [PhotoItem] = []
     @Published var similarPhotoGroups: [PhotoGroup] = []
     @Published var screenshots: [PhotoItem] = []
     @Published var largeVideos: [VideoItem] = []
@@ -65,11 +66,17 @@ final class DashboardViewModel: ObservableObject {
             }
             print("CleanSpace: Fetched \(shots.count) screenshots")
             
-            // 2. Similar photos
+            // 2. Photos & Similar photos
             currentTask = "Analyzing photos for similarities..."
-            let allPhotos = PhotoScanner.shared.fetchAllPhotos()
-            print("CleanSpace: Fetched \(allPhotos.count) total photo assets")
-            let groups = await PhotoSimilarityService.shared.findSimilarGroups(photos: allPhotos) { [weak self] progress, task in
+            let allPhotoAssets = PhotoScanner.shared.fetchAllPhotos()
+            print("CleanSpace: Fetched \(allPhotoAssets.count) total photo assets")
+            let photoItems = allPhotoAssets.map { PhotoItem(asset: $0, fileSize: PhotoScanner.shared.estimateAssetSize(asset: $0)) }
+            self.allPhotos = photoItems
+            for p in photoItems {
+                CleanupManager.shared.allPhotosMap[p.id] = p
+            }
+            
+            let groups = await PhotoSimilarityService.shared.findSimilarGroups(photos: allPhotoAssets) { [weak self] progress, task in
                 Task { @MainActor in
                     self?.scanProgress = 0.2 + progress * 0.45
                     self?.currentTask = task
@@ -77,11 +84,6 @@ final class DashboardViewModel: ObservableObject {
             }
             self.similarPhotoGroups = groups
             self.cleanablePhotoBytes = groups.reduce(0) { $0 + $1.cleanableSize }
-            for group in groups {
-                for photo in group.photos {
-                    CleanupManager.shared.allPhotosMap[photo.id] = photo
-                }
-            }
             print("CleanSpace: Found \(groups.count) similar photo groups")
             
             // 3. Large & Duplicate Videos

@@ -60,7 +60,7 @@ struct DuplicateContactsView: View {
                     Divider()
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("\(cleanupManager.totalSelectedCount) items selected")
+                            Text(cleanupManager.formattedTotalSelectedCount)
                                 .font(.subheadline)
                                 .fontWeight(.bold)
                             if cleanupManager.totalEstimatedBytes > 0 {

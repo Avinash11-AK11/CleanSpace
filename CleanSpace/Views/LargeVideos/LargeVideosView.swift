@@ -58,7 +58,7 @@ struct LargeVideosView: View {
                     Divider()
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("\(cleanupManager.totalSelectedCount) items selected")
+                            Text(cleanupManager.formattedTotalSelectedCount)
                                 .font(.subheadline)
                                 .fontWeight(.bold)
                             Text("Frees: \(cleanupManager.formattedEstimatedBytes)")
@@ -132,7 +132,7 @@ struct LargeVideosView: View {
             // Quick action banner
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(duplicateGroups.count) Duplicate Groups")
+                    Text(duplicateGroups.count == 1 ? "1 Duplicate Group" : "\(duplicateGroups.count) Duplicate Groups")
                         .font(.subheadline)
                         .fontWeight(.bold)
                     Text("Best original video kept with ⭐")
@@ -192,7 +192,7 @@ struct LargeVideosView: View {
                     .font(.caption)
                     .foregroundColor(AppTheme.subtleGray)
                 Spacer()
-                Text("\(videos.count) Videos")
+                Text(videos.count == 1 ? "1 Video" : "\(videos.count) Videos")
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundColor(AppTheme.subtleGray)
@@ -347,7 +347,7 @@ struct DuplicateVideoGroupCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 HStack(spacing: 6) {
-                    Text("\(group.videos.count) Videos")
+                    Text(group.videos.count == 1 ? "1 Video" : "\(group.videos.count) Videos")
                         .font(.caption)
                         .fontWeight(.bold)
                         .padding(.horizontal, 8)
@@ -363,7 +363,7 @@ struct DuplicateVideoGroupCard: View {
                 
                 Spacer()
                 
-                Button("Select Duplicate") {
+                Button(group.videos.count - 1 == 1 ? "Select Duplicate" : "Select Duplicates") {
                     withAnimation {
                         guard let bestId = group.recommendedBestId else { return }
                         for video in group.videos where video.id != bestId {
@@ -479,7 +479,7 @@ struct DuplicateVideoGroupCard: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? AppTheme.accentEmerald : (isBest ? AppTheme.accentOrange.opacity(0.5) : Color.clear), lineWidth: 1.5)
+                            .stroke(isSelected ? AppTheme.accentEmerald : Color.clear, lineWidth: 2)
                     )
                 }
             }

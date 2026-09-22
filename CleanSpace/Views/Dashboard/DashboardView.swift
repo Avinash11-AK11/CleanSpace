@@ -69,11 +69,15 @@ struct DashboardView: View {
                                 .tracking(1.0)
                                 .padding(.horizontal)
                             
-                            // 1. Similar Photos
-                            NavigationLink(destination: SimilarPhotosView(groups: $viewModel.similarPhotoGroups)) {
+                            // 1. Photos & Duplicates
+                            NavigationLink(destination: SimilarPhotosView(groups: $viewModel.similarPhotoGroups, allPhotos: $viewModel.allPhotos)) {
+                                let pCount = viewModel.allPhotos.count
+                                let pText = pCount == 1 ? "1 photo" : "\(pCount) photos"
+                                let pgCount = viewModel.similarPhotoGroups.count
+                                let pgText = pgCount == 1 ? "1 duplicate group" : "\(pgCount) duplicate groups"
                                 CategoryCardView(
-                                    title: "Similar & Duplicate Photos",
-                                    subtitle: "\(viewModel.similarPhotoGroups.count) groups found",
+                                    title: "Photos & Duplicates",
+                                    subtitle: pgCount == 0 ? pText : "\(pText) • \(pgText)",
                                     badgeText: viewModel.cleanablePhotoBytes > 0 ? ByteCountFormatter.string(fromByteCount: viewModel.cleanablePhotoBytes, countStyle: .file) : nil,
                                     iconName: "photo.on.rectangle.angled",
                                     iconColor: AppTheme.accentBlue
@@ -84,9 +88,10 @@ struct DashboardView: View {
                             
                             // 2. Screenshots
                             NavigationLink(destination: ScreenshotsView(screenshots: $viewModel.screenshots)) {
+                                let sCount = viewModel.screenshots.count
                                 CategoryCardView(
                                     title: "Screenshots",
-                                    subtitle: "\(viewModel.screenshots.count) items",
+                                    subtitle: sCount == 1 ? "1 screenshot" : "\(sCount) screenshots",
                                     badgeText: viewModel.cleanableScreenshotBytes > 0 ? ByteCountFormatter.string(fromByteCount: viewModel.cleanableScreenshotBytes, countStyle: .file) : nil,
                                     iconName: "camera.viewfinder",
                                     iconColor: AppTheme.accentPurple
@@ -97,9 +102,13 @@ struct DashboardView: View {
                             
                             // 3. Videos & Duplicates
                             NavigationLink(destination: LargeVideosView(videos: $viewModel.largeVideos, duplicateGroups: $viewModel.duplicateVideoGroups)) {
+                                let vCount = viewModel.largeVideos.count
+                                let vText = vCount == 1 ? "1 video" : "\(vCount) videos"
+                                let gCount = viewModel.duplicateVideoGroups.count
+                                let gText = gCount == 1 ? "1 duplicate group" : "\(gCount) duplicate groups"
                                 CategoryCardView(
                                     title: "Videos & Duplicates",
-                                    subtitle: viewModel.duplicateVideoGroups.isEmpty ? "\(viewModel.largeVideos.count) videos" : "\(viewModel.largeVideos.count) videos • \(viewModel.duplicateVideoGroups.count) duplicate groups",
+                                    subtitle: gCount == 0 ? vText : "\(vText) • \(gText)",
                                     badgeText: viewModel.cleanableDuplicateVideoBytes > 0 ? ByteCountFormatter.string(fromByteCount: viewModel.cleanableDuplicateVideoBytes, countStyle: .file) : (viewModel.cleanableVideoBytes > 0 ? ByteCountFormatter.string(fromByteCount: viewModel.cleanableVideoBytes, countStyle: .file) : nil),
                                     iconName: "film.stack",
                                     iconColor: AppTheme.accentOrange
@@ -110,9 +119,10 @@ struct DashboardView: View {
                             
                             // 4. Duplicate Contacts
                             NavigationLink(destination: DuplicateContactsView(groups: $viewModel.duplicateContactGroups)) {
+                                let cCount = viewModel.duplicateContactGroups.count
                                 CategoryCardView(
                                     title: "Duplicate Contacts",
-                                    subtitle: "\(viewModel.duplicateContactGroups.count) potential duplicates",
+                                    subtitle: cCount == 1 ? "1 duplicate contact" : "\(cCount) duplicate contacts",
                                     badgeText: "\(viewModel.duplicateContactGroups.count)",
                                     iconName: "person.crop.circle.badge.exclamationmark",
                                     iconColor: AppTheme.accentEmerald
@@ -146,7 +156,7 @@ struct DashboardView: View {
                         Divider()
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("\(cleanupManager.totalSelectedCount) items selected")
+                                Text(cleanupManager.formattedTotalSelectedCount)
                                     .font(.subheadline)
                                     .fontWeight(.bold)
                                 Text("Frees up \(cleanupManager.formattedEstimatedBytes)")

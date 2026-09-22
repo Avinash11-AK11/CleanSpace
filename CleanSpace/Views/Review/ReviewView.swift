@@ -49,7 +49,7 @@ struct ReviewView: View {
                             .font(.system(size: 40, weight: .heavy, design: .rounded))
                             .foregroundColor(AppTheme.accentEmerald)
                         
-                        Text("Across \(cleanupManager.totalSelectedCount) selected items")
+                        Text("Across \(cleanupManager.formattedTotalSelectedCount)")
                             .font(.subheadline)
                             .foregroundColor(AppTheme.subtleGray)
                     }
@@ -146,7 +146,7 @@ struct ReviewView: View {
                     }) {
                         HStack {
                             Image(systemName: "trash.fill")
-                            Text("Clean \(cleanupManager.totalSelectedCount) Items")
+                            Text(cleanupManager.totalSelectedCount == 1 ? "Clean 1 Item" : "Clean \(cleanupManager.totalSelectedCount) Items")
                         }
                     }
                     .primaryButtonStyle(bg: cleanupManager.totalSelectedCount > 0 ? AppTheme.accentEmerald : Color.gray)
@@ -165,7 +165,7 @@ struct ReviewView: View {
             isPresented: $showConfirmDialog,
             titleVisibility: .visible
         ) {
-            Button("Remove \(cleanupManager.totalSelectedCount) Items from Device", role: .destructive) {
+            Button(cleanupManager.totalSelectedCount == 1 ? "Remove 1 Item from Device" : "Remove \(cleanupManager.totalSelectedCount) Items from Device", role: .destructive) {
                 performCleanup()
             }
             Button("Cancel", role: .cancel) {}

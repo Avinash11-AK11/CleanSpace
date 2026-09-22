@@ -86,6 +86,13 @@ final class CleanupManager: ObservableObject {
         }
     }
     
+    func selectAllPhotos(_ items: [PhotoItem]) {
+        for item in items {
+            selectedPhotoIds.insert(item.id)
+            allPhotosMap[item.id] = item
+        }
+    }
+    
     func deselectAllPhotos() {
         selectedPhotoIds.removeAll()
     }
@@ -106,6 +113,10 @@ final class CleanupManager: ObservableObject {
     
     var totalSelectedCount: Int {
         selectedPhotoIds.count + selectedScreenshotIds.count + selectedVideoIds.count + selectedContactIds.count
+    }
+    
+    var formattedTotalSelectedCount: String {
+        totalSelectedCount == 1 ? "1 item selected" : "\(totalSelectedCount) items selected"
     }
     
     var totalEstimatedBytes: Int64 {
