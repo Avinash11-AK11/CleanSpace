@@ -22,7 +22,6 @@
 		375040685B17F2C082B78F9C /* VideoCompressorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A27F1033E72AC36B920595B /* VideoCompressorView.swift */; };
 		421AEDFEE604B3C0C5424FD5 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D97A699597A1FEC096C6E22 /* DashboardViewModel.swift */; };
 		437A158CCF775F9FBD7A9A0E /* PhotoGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE86D75F191B18089271ABBF /* PhotoGroup.swift */; };
-		51D963B0E44098EAD2E32F17 /* CleanSpaceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CA2384431A764E541127076 /* CleanSpaceWidget.swift */; };
 		57C35616ED3A457CAA289301 /* CalendarScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0915C4FBCCB654B16153D6A2 /* CalendarScanner.swift */; };
 		58495A358B304D5D3A7DE2A2 /* SimilarPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6093BF448CFA9F13BFCB5DAC /* SimilarPhotosView.swift */; };
 		5D9708A19CAD41E524C1D237 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD5EE96CCBDABE6B64F738C9 /* PermissionManager.swift */; };
@@ -42,9 +41,7 @@
 		A99318576728DC3D4240E7D8 /* CleanupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C3FB34C86161B35B4294BD /* CleanupManager.swift */; };
 		AB996EA4D3909720139E6FE8 /* ScreenshotsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F79931CE4096900C99C5C43 /* ScreenshotsView.swift */; };
 		BC61007C4AEF2F98DBD53740 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD5C28D84132B2F9B78B7CC9 /* AppTheme.swift */; };
-		C3535FFC392DFFB5D451DCFF /* StorageWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7A8D9F2288840724D000B4 /* StorageWidgetView.swift */; };
 		C473E43638429907AE1D3EC1 /* BlurryPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D6DA6D5AACA15E9240D115 /* BlurryPhotosView.swift */; };
-		CCD138E681BC8EFBA56F437A /* CleanSpaceWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 96618E4F52AB02CB317D6538 /* CleanSpaceWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CE261B5F52D4DF5EFB7EA3C4 /* VaultManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5F60BEF32A745538DB3F290 /* VaultManager.swift */; };
 		D03770A4794705F19A540424 /* ScreenshotScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D532D21DEB3A7492ABB29B0 /* ScreenshotScanner.swift */; };
 		D41764CF5096301C1DD7EB71 /* CleanupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 976B83FA0746A5BD7274D90F /* CleanupService.swift */; };
@@ -56,30 +53,6 @@
 		F663FA8E6CA24F6A6930083A /* ContactScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C820134BD78C1608B96BAFC /* ContactScanner.swift */; };
 		F7B2144A7FF6DE5423B25C2D /* PermissionRequestSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F27807672A9978A9C7F9BC9 /* PermissionRequestSheet.swift */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		7328441C9294F447BA26E8B2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5C366A7E32803A79CB49F9EC /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 390DE4A41A85CAD0FD530FE2;
-			remoteInfo = CleanSpaceWidget;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		A7F537D76FE5F1C4B5F624BE /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				CCD138E681BC8EFBA56F437A /* CleanSpaceWidget.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		06D6DA6D5AACA15E9240D115 /* BlurryPhotosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlurryPhotosView.swift; sourceTree = "<group>"; };
@@ -99,7 +72,6 @@
 		66A56DBB28FA3422F81977CF /* VaultLockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultLockView.swift; sourceTree = "<group>"; };
 		66CCEB8F38544866FA9D1582 /* StorageInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageInfo.swift; sourceTree = "<group>"; };
 		68127EAD9C526EA5F4A6E0C9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		6CA2384431A764E541127076 /* CleanSpaceWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanSpaceWidget.swift; sourceTree = "<group>"; };
 		6F861FEEBD61DD794297E338 /* PermissionBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionBannerView.swift; sourceTree = "<group>"; };
 		719B074BF30BFE63FE71BD71 /* VaultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultView.swift; sourceTree = "<group>"; };
 		74458010E46C5B4399151685 /* CategoryCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryCardView.swift; sourceTree = "<group>"; };
@@ -108,7 +80,6 @@
 		8BAA82EF1113E7942BBFF74E /* PhotoItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoItem.swift; sourceTree = "<group>"; };
 		920C2AD4FCBFDDFABAFEC6D1 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
 		9374C2FC3C5D0CB565DD3645 /* PHAssetThumbnailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PHAssetThumbnailView.swift; sourceTree = "<group>"; };
-		96618E4F52AB02CB317D6538 /* CleanSpaceWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = CleanSpaceWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		976B83FA0746A5BD7274D90F /* CleanupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupService.swift; sourceTree = "<group>"; };
 		9D532D21DEB3A7492ABB29B0 /* ScreenshotScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotScanner.swift; sourceTree = "<group>"; };
 		9F27807672A9978A9C7F9BC9 /* PermissionRequestSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionRequestSheet.swift; sourceTree = "<group>"; };
@@ -123,10 +94,8 @@
 		CDFB8071AC3ABBB99161A5F7 /* CleanSpaceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanSpaceApp.swift; sourceTree = "<group>"; };
 		D8BEBDDEFE1AD29293128E34 /* BlurDetectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlurDetectionService.swift; sourceTree = "<group>"; };
 		DC549EFC0BE31425D72E68D4 /* VideoCompressionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCompressionService.swift; sourceTree = "<group>"; };
-		DC7A8D9F2288840724D000B4 /* StorageWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageWidgetView.swift; sourceTree = "<group>"; };
 		DD5C28D84132B2F9B78B7CC9 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		DE86D75F191B18089271ABBF /* PhotoGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoGroup.swift; sourceTree = "<group>"; };
-		DF107065658210870B762CDA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E8AC6B17B1C984B5AB8A653B /* PhotoSimilarityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSimilarityService.swift; sourceTree = "<group>"; };
 		F2B28744C88F26B5B8254479 /* SwipeCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeCardView.swift; sourceTree = "<group>"; };
 		F68147531BFC014CD863E0FF /* VideoScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoScanner.swift; sourceTree = "<group>"; };
@@ -140,17 +109,8 @@
 			isa = PBXGroup;
 			children = (
 				FF53EF0778B24D1CE4612EEE /* CleanSpace.app */,
-				96618E4F52AB02CB317D6538 /* CleanSpaceWidget.appex */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		0D0765CBA0B76BF4A020DAAC /* Widget */ = {
-			isa = PBXGroup;
-			children = (
-				DC7A8D9F2288840724D000B4 /* StorageWidgetView.swift */,
-			);
-			path = Widget;
 			sourceTree = "<group>";
 		};
 		126DE783CD6D76C3B875F805 /* ViewModels */ = {
@@ -167,7 +127,6 @@
 			isa = PBXGroup;
 			children = (
 				BAEA670148E534FB8CAD2F70 /* CleanSpace */,
-				CCA740AF46F9B6DE2638D5F4 /* CleanSpaceWidget */,
 				021E60EDB8E8BC8325C4A985 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -250,7 +209,6 @@
 				A571BE8C05FCE585937CA06F /* SpaceFreed */,
 				314602518D331C510257A742 /* SwipeCleaner */,
 				C0C269E0F32E3AD26E05D048 /* Vault */,
-				0D0765CBA0B76BF4A020DAAC /* Widget */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -309,15 +267,6 @@
 				719B074BF30BFE63FE71BD71 /* VaultView.swift */,
 			);
 			path = Vault;
-			sourceTree = "<group>";
-		};
-		CCA740AF46F9B6DE2638D5F4 /* CleanSpaceWidget */ = {
-			isa = PBXGroup;
-			children = (
-				6CA2384431A764E541127076 /* CleanSpaceWidget.swift */,
-				DF107065658210870B762CDA /* Info.plist */,
-			);
-			path = CleanSpaceWidget;
 			sourceTree = "<group>";
 		};
 		D67711DC558B6D003DB1C0C1 /* Screenshots */ = {
@@ -380,34 +329,15 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		390DE4A41A85CAD0FD530FE2 /* CleanSpaceWidget */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 694964358221396C96FF8BDC /* Build configuration list for PBXNativeTarget "CleanSpaceWidget" */;
-			buildPhases = (
-				1BF1A60DBC735F4FB857559D /* Sources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = CleanSpaceWidget;
-			packageProductDependencies = (
-			);
-			productName = CleanSpaceWidget;
-			productReference = 96618E4F52AB02CB317D6538 /* CleanSpaceWidget.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
 		D8A81AA13FE74731C30086A1 /* CleanSpace */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 86920A7A71DEF259450C46F5 /* Build configuration list for PBXNativeTarget "CleanSpace" */;
 			buildPhases = (
 				B73C8FEF660F5F3FB5C9B60D /* Sources */,
-				A7F537D76FE5F1C4B5F624BE /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				46A6CBFE90E1ED68629A3BB0 /* PBXTargetDependency */,
 			);
 			name = CleanSpace;
 			packageProductDependencies = (
@@ -442,20 +372,11 @@
 			projectRoot = "";
 			targets = (
 				D8A81AA13FE74731C30086A1 /* CleanSpace */,
-				390DE4A41A85CAD0FD530FE2 /* CleanSpaceWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
-		1BF1A60DBC735F4FB857559D /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				51D963B0E44098EAD2E32F17 /* CleanSpaceWidget.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		B73C8FEF660F5F3FB5C9B60D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -493,7 +414,6 @@
 				11033332EC906A99EC94691B /* StorageGaugeView.swift in Sources */,
 				68E29F90807112E442F9EB99 /* StorageInfo.swift in Sources */,
 				7CFDA8445A41A41D72834342 /* StorageService.swift in Sources */,
-				C3535FFC392DFFB5D451DCFF /* StorageWidgetView.swift in Sources */,
 				5E06FF033D1E7543C4F8AC5C /* SwipeCardView.swift in Sources */,
 				A9103E0A14B53228EC5EE54B /* SwipeCleanerView.swift in Sources */,
 				816DFEEAEA66F4B722537C62 /* SwipeCleanerViewModel.swift in Sources */,
@@ -510,14 +430,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		46A6CBFE90E1ED68629A3BB0 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 390DE4A41A85CAD0FD530FE2 /* CleanSpaceWidget */;
-			targetProxy = 7328441C9294F447BA26E8B2 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		4B1BF0C67E6A8A3D2419BF48 /* Debug */ = {
@@ -605,48 +517,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.cleanspace.app;
 				PRODUCT_NAME = CleanSpace;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Release;
-		};
-		7C6121FC698D7529D15EE55E /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				INFOPLIST_FILE = CleanSpaceWidget/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.cleanspace.app.CleanSpaceWidget;
-				PRODUCT_NAME = CleanSpaceWidget;
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Debug;
-		};
-		92A90F434C8FECE41863B25E /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				INFOPLIST_FILE = CleanSpaceWidget/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.cleanspace.app.CleanSpaceWidget;
-				PRODUCT_NAME = CleanSpaceWidget;
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
@@ -741,15 +611,6 @@
 			buildConfigurations = (
 				4B1BF0C67E6A8A3D2419BF48 /* Debug */,
 				BBEFEED64818D620E65887B4 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		694964358221396C96FF8BDC /* Build configuration list for PBXNativeTarget "CleanSpaceWidget" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				7C6121FC698D7529D15EE55E /* Debug */,
-				92A90F434C8FECE41863B25E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
