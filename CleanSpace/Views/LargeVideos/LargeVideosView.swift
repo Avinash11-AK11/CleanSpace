@@ -10,6 +10,7 @@ struct LargeVideosView: View {
     @State private var previewVideoAsset: PHAsset?
     @State private var previewPlayer: AVPlayer?
     @State private var selectedTab: VideoTab = .duplicates
+    @State private var videoToCompress: VideoItem? = nil
     
     enum VideoTab: String, CaseIterable, Identifiable {
         case duplicates = "Duplicates"
@@ -107,6 +108,11 @@ struct LargeVideosView: View {
                 ProgressView("Loading preview...")
             }
         }
+        .sheet(item: $videoToCompress) { video in
+            VideoCompressorView(video: video) {
+                syncDeletedVideos()
+            }
+        }
     }
     
     // MARK: - Duplicates Tab
@@ -161,6 +167,9 @@ struct LargeVideosView: View {
                         group: group,
                         onPlay: { asset in
                             loadAndPlayVideo(asset: asset)
+                        },
+                        onCompress: { video in
+                            videoToCompress = video
                         }
                     )
                 }
@@ -268,23 +277,37 @@ struct LargeVideosView: View {
                         
                         Spacer()
                         
-                        // Select checkbox
-                        Button {
-                            withAnimation(.spring(response: 0.3)) {
-                                cleanupManager.toggleVideo(video)
+                        HStack(spacing: 12) {
+                            Button {
+                                videoToCompress = video
+                            } label: {
+                                Image(systemName: "arrow.down.right.and.arrow.up.left")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(AppTheme.accentBlue)
+                                    .padding(8)
+                                    .background(AppTheme.accentBlue.opacity(0.12))
+                                    .clipShape(Circle())
                             }
-                        } label: {
-                            ZStack {
-                                Circle()
-                                    .fill(isSelected ? AppTheme.accentEmerald : Color(uiColor: .systemFill))
-                                    .frame(width: 28, height: 28)
-                                
-                                Image(systemName: isSelected ? "checkmark" : "circle")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(isSelected ? .white : AppTheme.subtleGray)
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            // Select checkbox
+                            Button {
+                                withAnimation(.spring(response: 0.3)) {
+                                    cleanupManager.toggleVideo(video)
+                                }
+                            } label: {
+                                ZStack {
+                                    Circle()
+                                        .fill(isSelected ? AppTheme.accentEmerald : Color(uiColor: .systemFill))
+                                        .frame(width: 28, height: 28)
+                                    
+                                    Image(systemName: isSelected ? "checkmark" : "circle")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(isSelected ? .white : AppTheme.subtleGray)
+                                }
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .buttonStyle(PlainButtonStyle())
                     }
                     .padding(12)
                     .background(AppTheme.cardBackground)
@@ -341,6 +364,7 @@ struct LargeVideosView: View {
 struct DuplicateVideoGroupCard: View {
     let group: VideoGroup
     let onPlay: (PHAsset) -> Void
+    let onCompress: (VideoItem) -> Void
     @ObservedObject private var cleanupManager = CleanupManager.shared
     
     var body: some View {
@@ -456,23 +480,37 @@ struct DuplicateVideoGroupCard: View {
                         
                         Spacer()
                         
-                        // Selection Checkbox
-                        Button {
-                            withAnimation(.spring(response: 0.3)) {
-                                cleanupManager.toggleVideo(video)
+                        HStack(spacing: 10) {
+                            Button {
+                                onCompress(video)
+                            } label: {
+                                Image(systemName: "arrow.down.right.and.arrow.up.left")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(AppTheme.accentBlue)
+                                    .padding(6)
+                                    .background(AppTheme.accentBlue.opacity(0.12))
+                                    .clipShape(Circle())
                             }
-                        } label: {
-                            ZStack {
-                                Circle()
-                                    .fill(isSelected ? AppTheme.accentEmerald : Color(uiColor: .systemFill))
-                                    .frame(width: 26, height: 26)
-                                
-                                Image(systemName: isSelected ? "checkmark" : "circle")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(isSelected ? .white : AppTheme.subtleGray)
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            // Selection Checkbox
+                            Button {
+                                withAnimation(.spring(response: 0.3)) {
+                                    cleanupManager.toggleVideo(video)
+                                }
+                            } label: {
+                                ZStack {
+                                    Circle()
+                                        .fill(isSelected ? AppTheme.accentEmerald : Color(uiColor: .systemFill))
+                                        .frame(width: 26, height: 26)
+                                    
+                                    Image(systemName: isSelected ? "checkmark" : "circle")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(isSelected ? .white : AppTheme.subtleGray)
+                                }
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .buttonStyle(PlainButtonStyle())
                     }
                     .padding(8)
                     .background(Color(uiColor: .secondarySystemGroupedBackground))

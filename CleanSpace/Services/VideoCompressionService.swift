@@ -1,0 +1,140 @@
+import Foundation
+import Photos
+import AVFoundation
+
+enum CompressionPreset: String, CaseIterable, Identifiable, Sendable {
+    case high = "1080p High Quality"
+    case medium = "720p Balanced (Recommended)"
+    case low = "540p Maximum Savings"
+    
+    var id: String { rawValue }
+    
+    var avPresetName: String {
+        switch self {
+        case .high:
+            return AVAssetExportPreset1920x1080
+        case .medium:
+            return AVAssetExportPreset1280x720
+        case .low:
+            return AVAssetExportPreset960x540
+        }
+    }
+    
+    var reductionFactor: Double {
+        switch self {
+        case .high:
+            return 0.50 // ~50% savings
+        case .medium:
+            return 0.72 // ~72% savings
+        case .low:
+            return 0.85 // ~85% savings
+        }
+    }
+    
+    var resolutionLabel: String {
+        switch self {
+        case .high: return "1080p"
+        case .medium: return "720p"
+        case .low: return "540p"
+        }
+    }
+}
+
+final class VideoCompressionService: @unchecked Sendable {
+    static let shared = VideoCompressionService()
+    
+    private init() {}
+    
+    /// Estimates compressed file size for a given preset
+    func estimateCompressedSize(originalBytes: Int64, preset: CompressionPreset) -> Int64 {
+        let estimated = Int64(Double(originalBytes) * (1.0 - preset.reductionFactor))
+        return max(500_000, estimated)
+    }
+    
+    /// Compresses a video asset with real-time progress callbacks
+    func compressVideo(
+        asset: PHAsset,
+        preset: CompressionPreset,
+        progressHandler: (@Sendable (Double) -> Void)? = nil
+    ) async throws -> URL {
+        let avAsset: AVAsset = try await withCheckedThrowingContinuation { continuation in
+            let options = PHVideoRequestOptions()
+            options.isNetworkAccessAllowed = true
+            options.deliveryMode = .highQualityFormat
+            
+            PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, info in
+                if let error = info?[PHImageErrorKey] as? Error {
+                    continuation.resume(throwing: error)
+                } else if let avAsset = avAsset {
+                    continuation.resume(returning: avAsset)
+                } else {
+                    continuation.resume(throwing: NSError(domain: "CleanSpaceVideoCompression", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to load video asset"]))
+                }
+            }
+        }
+        
+        let outputURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("mp4")
+        
+        // Remove existing file if any
+        try? FileManager.default.removeItem(at: outputURL)
+        
+        guard let exportSession = AVAssetExportSession(asset: avAsset, presetName: preset.avPresetName) else {
+            throw NSError(domain: "CleanSpaceVideoCompression", code: -2, userInfo: [NSLocalizedDescriptionKey: "Preset not supported for this video"])
+        }
+        
+        exportSession.outputURL = outputURL
+        exportSession.outputFileType = .mp4
+        exportSession.shouldOptimizeForNetworkUse = true
+        
+        // Start progress tracking timer
+        let isExporting = true
+        let progressTask = Task {
+            while isExporting && exportSession.status == .exporting || exportSession.status == .waiting {
+                let progress = Double(exportSession.progress)
+                progressHandler?(progress)
+                try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            }
+        }
+        
+        await exportSession.export()
+        progressTask.cancel()
+        
+        switch exportSession.status {
+        case .completed:
+            progressHandler?(1.0)
+            return outputURL
+        case .failed:
+            let err = exportSession.error ?? NSError(domain: "CleanSpaceVideoCompression", code: -3, userInfo: [NSLocalizedDescriptionKey: "Compression export failed"])
+            throw err
+        case .cancelled:
+            throw NSError(domain: "CleanSpaceVideoCompression", code: -4, userInfo: [NSLocalizedDescriptionKey: "Export was cancelled"])
+        default:
+            throw NSError(domain: "CleanSpaceVideoCompression", code: -5, userInfo: [NSLocalizedDescriptionKey: "Unknown export status"])
+        }
+    }
+    
+    /// Saves the compressed video to the user's Photos library and optionally deletes the original uncompressed video
+    func saveCompressedVideo(
+        fileURL: URL,
+        originalAsset: PHAsset?,
+        deleteOriginal: Bool
+    ) async throws {
+        // 1. Save new compressed video
+        var placeholder: PHObjectPlaceholder?
+        try await PHPhotoLibrary.shared().performChanges {
+            let request = PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: fileURL)
+            placeholder = request?.placeholderForCreatedAsset
+        }
+        
+        // 2. Optionally delete original
+        if deleteOriginal, let original = originalAsset {
+            try await CleanupService.shared.deleteAssets(assets: [original])
+        }
+        
+        // Clean up temporary local file
+        try? FileManager.default.removeItem(at: fileURL)
+        _ = placeholder
+    }
+}

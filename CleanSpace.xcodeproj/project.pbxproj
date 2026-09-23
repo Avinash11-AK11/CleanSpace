@@ -13,35 +13,76 @@
 		11890B299B673FBA733419E0 /* PhotoScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C39C9E78967EF5F7F92AEDF0 /* PhotoScanner.swift */; };
 		1D939ABBD493EB53637031B8 /* PermissionBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F861FEEBD61DD794297E338 /* PermissionBannerView.swift */; };
 		1DF0341C3CD4D7246AAF3BD9 /* ReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B7D58EEBCB94701D8D1B0FA /* ReviewView.swift */; };
+		1E4C8B5EB40A49802994B531 /* CalendarCleanupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A179A064F77A7A370B2023 /* CalendarCleanupView.swift */; };
+		2D5D43780D2315E6A34327AD /* VideoCompressionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC549EFC0BE31425D72E68D4 /* VideoCompressionService.swift */; };
+		2F4CCCAF6CBA8FF6BCA995E6 /* VaultLockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A56DBB28FA3422F81977CF /* VaultLockView.swift */; };
 		352FBB51E85B08521DE4E042 /* PhotoSimilarityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AC6B17B1C984B5AB8A653B /* PhotoSimilarityService.swift */; };
 		361EA4D44E7084EE8F0B69AF /* VideoScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68147531BFC014CD863E0FF /* VideoScanner.swift */; };
 		36C94C2FC866E2EFC93B03C2 /* DuplicateContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E210164132262EF1FEB69D8 /* DuplicateContactsView.swift */; };
+		375040685B17F2C082B78F9C /* VideoCompressorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A27F1033E72AC36B920595B /* VideoCompressorView.swift */; };
 		421AEDFEE604B3C0C5424FD5 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D97A699597A1FEC096C6E22 /* DashboardViewModel.swift */; };
 		437A158CCF775F9FBD7A9A0E /* PhotoGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE86D75F191B18089271ABBF /* PhotoGroup.swift */; };
+		51D963B0E44098EAD2E32F17 /* CleanSpaceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CA2384431A764E541127076 /* CleanSpaceWidget.swift */; };
+		57C35616ED3A457CAA289301 /* CalendarScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0915C4FBCCB654B16153D6A2 /* CalendarScanner.swift */; };
 		58495A358B304D5D3A7DE2A2 /* SimilarPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6093BF448CFA9F13BFCB5DAC /* SimilarPhotosView.swift */; };
 		5D9708A19CAD41E524C1D237 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD5EE96CCBDABE6B64F738C9 /* PermissionManager.swift */; };
+		5E06FF033D1E7543C4F8AC5C /* SwipeCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B28744C88F26B5B8254479 /* SwipeCardView.swift */; };
 		60B41BC5C1F67F69531A6FED /* PHAssetThumbnailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9374C2FC3C5D0CB565DD3645 /* PHAssetThumbnailView.swift */; };
 		67AB2834F23CF22B82A5438A /* LargeVideosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2462C763B45FFD88838314E7 /* LargeVideosView.swift */; };
 		68E29F90807112E442F9EB99 /* StorageInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CCEB8F38544866FA9D1582 /* StorageInfo.swift */; };
+		6C6F9A2FCEC7FA84024AE3AD /* VaultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 719B074BF30BFE63FE71BD71 /* VaultView.swift */; };
 		7516F0C3CC673FD3551B1515 /* VideoItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 857ABC4E9B7478F29124FE87 /* VideoItem.swift */; };
 		7A465EE9876658645B7F5454 /* VideoGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11044D54E7F41B0E48CC0E9C /* VideoGroup.swift */; };
 		7CFDA8445A41A41D72834342 /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920C2AD4FCBFDDFABAFEC6D1 /* StorageService.swift */; };
+		816DFEEAEA66F4B722537C62 /* SwipeCleanerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F4C843C2234C2DCCEA4FE03 /* SwipeCleanerViewModel.swift */; };
 		8594532B48CA84FCA6F5D4EC /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6E00D229179FD273BD13E9 /* DashboardView.swift */; };
 		8C9DE4A80411975458F1D62A /* SpaceFreedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41775C1ABC497C5D3972D438 /* SpaceFreedView.swift */; };
 		9F4121BEF3196CEBB8B254E9 /* ContactGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C0EBA54143F6AE7960AC4C /* ContactGroup.swift */; };
+		A9103E0A14B53228EC5EE54B /* SwipeCleanerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F861F401BFCB708E28DB903 /* SwipeCleanerView.swift */; };
 		A99318576728DC3D4240E7D8 /* CleanupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C3FB34C86161B35B4294BD /* CleanupManager.swift */; };
 		AB996EA4D3909720139E6FE8 /* ScreenshotsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F79931CE4096900C99C5C43 /* ScreenshotsView.swift */; };
 		BC61007C4AEF2F98DBD53740 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD5C28D84132B2F9B78B7CC9 /* AppTheme.swift */; };
+		C473E43638429907AE1D3EC1 /* BlurryPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D6DA6D5AACA15E9240D115 /* BlurryPhotosView.swift */; };
+		CCD138E681BC8EFBA56F437A /* CleanSpaceWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 96618E4F52AB02CB317D6538 /* CleanSpaceWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CE261B5F52D4DF5EFB7EA3C4 /* VaultManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5F60BEF32A745538DB3F290 /* VaultManager.swift */; };
 		D03770A4794705F19A540424 /* ScreenshotScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D532D21DEB3A7492ABB29B0 /* ScreenshotScanner.swift */; };
 		D41764CF5096301C1DD7EB71 /* CleanupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 976B83FA0746A5BD7274D90F /* CleanupService.swift */; };
 		D788331A50B46D7902E38D2C /* CleanupSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8ED39CC985538DF34A78A90 /* CleanupSelection.swift */; };
 		D8E8CBBE62A8B27EAB794722 /* CleanSpaceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDFB8071AC3ABBB99161A5F7 /* CleanSpaceApp.swift */; };
+		E11AAB88945E97B3172D70B9 /* BlurDetectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BEBDDEFE1AD29293128E34 /* BlurDetectionService.swift */; };
+		F13EB3D87ED8964D4A1D4391 /* VaultMediaDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C4F30167C1ADF407C6D6901 /* VaultMediaDetailView.swift */; };
 		F575F19B99FDB8DA582E16B9 /* CategoryCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74458010E46C5B4399151685 /* CategoryCardView.swift */; };
 		F663FA8E6CA24F6A6930083A /* ContactScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C820134BD78C1608B96BAFC /* ContactScanner.swift */; };
 		F7B2144A7FF6DE5423B25C2D /* PermissionRequestSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F27807672A9978A9C7F9BC9 /* PermissionRequestSheet.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		7328441C9294F447BA26E8B2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5C366A7E32803A79CB49F9EC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 390DE4A41A85CAD0FD530FE2;
+			remoteInfo = CleanSpaceWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A7F537D76FE5F1C4B5F624BE /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				CCD138E681BC8EFBA56F437A /* CleanSpaceWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		06D6DA6D5AACA15E9240D115 /* BlurryPhotosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlurryPhotosView.swift; sourceTree = "<group>"; };
+		0915C4FBCCB654B16153D6A2 /* CalendarScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarScanner.swift; sourceTree = "<group>"; };
 		0A6E00D229179FD273BD13E9 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		0E210164132262EF1FEB69D8 /* DuplicateContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateContactsView.swift; sourceTree = "<group>"; };
 		11044D54E7F41B0E48CC0E9C /* VideoGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoGroup.swift; sourceTree = "<group>"; };
@@ -49,29 +90,43 @@
 		1B7D58EEBCB94701D8D1B0FA /* ReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewView.swift; sourceTree = "<group>"; };
 		2462C763B45FFD88838314E7 /* LargeVideosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LargeVideosView.swift; sourceTree = "<group>"; };
 		2C820134BD78C1608B96BAFC /* ContactScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactScanner.swift; sourceTree = "<group>"; };
+		3C4F30167C1ADF407C6D6901 /* VaultMediaDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultMediaDetailView.swift; sourceTree = "<group>"; };
 		41775C1ABC497C5D3972D438 /* SpaceFreedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceFreedView.swift; sourceTree = "<group>"; };
+		4F4C843C2234C2DCCEA4FE03 /* SwipeCleanerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeCleanerViewModel.swift; sourceTree = "<group>"; };
+		5A27F1033E72AC36B920595B /* VideoCompressorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCompressorView.swift; sourceTree = "<group>"; };
 		6093BF448CFA9F13BFCB5DAC /* SimilarPhotosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarPhotosView.swift; sourceTree = "<group>"; };
+		66A56DBB28FA3422F81977CF /* VaultLockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultLockView.swift; sourceTree = "<group>"; };
 		66CCEB8F38544866FA9D1582 /* StorageInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageInfo.swift; sourceTree = "<group>"; };
 		68127EAD9C526EA5F4A6E0C9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		6CA2384431A764E541127076 /* CleanSpaceWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanSpaceWidget.swift; sourceTree = "<group>"; };
 		6F861FEEBD61DD794297E338 /* PermissionBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionBannerView.swift; sourceTree = "<group>"; };
+		719B074BF30BFE63FE71BD71 /* VaultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultView.swift; sourceTree = "<group>"; };
 		74458010E46C5B4399151685 /* CategoryCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryCardView.swift; sourceTree = "<group>"; };
 		7D97A699597A1FEC096C6E22 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		857ABC4E9B7478F29124FE87 /* VideoItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoItem.swift; sourceTree = "<group>"; };
 		8BAA82EF1113E7942BBFF74E /* PhotoItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoItem.swift; sourceTree = "<group>"; };
 		920C2AD4FCBFDDFABAFEC6D1 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
 		9374C2FC3C5D0CB565DD3645 /* PHAssetThumbnailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PHAssetThumbnailView.swift; sourceTree = "<group>"; };
+		96618E4F52AB02CB317D6538 /* CleanSpaceWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = CleanSpaceWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		976B83FA0746A5BD7274D90F /* CleanupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupService.swift; sourceTree = "<group>"; };
 		9D532D21DEB3A7492ABB29B0 /* ScreenshotScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotScanner.swift; sourceTree = "<group>"; };
 		9F27807672A9978A9C7F9BC9 /* PermissionRequestSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionRequestSheet.swift; sourceTree = "<group>"; };
 		9F79931CE4096900C99C5C43 /* ScreenshotsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotsView.swift; sourceTree = "<group>"; };
+		9F861F401BFCB708E28DB903 /* SwipeCleanerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeCleanerView.swift; sourceTree = "<group>"; };
+		A1A179A064F77A7A370B2023 /* CalendarCleanupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarCleanupView.swift; sourceTree = "<group>"; };
+		A5F60BEF32A745538DB3F290 /* VaultManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultManager.swift; sourceTree = "<group>"; };
 		B6C3FB34C86161B35B4294BD /* CleanupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupManager.swift; sourceTree = "<group>"; };
 		C269264F460D072205157FF4 /* StorageGaugeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageGaugeView.swift; sourceTree = "<group>"; };
 		C39C9E78967EF5F7F92AEDF0 /* PhotoScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoScanner.swift; sourceTree = "<group>"; };
 		C8ED39CC985538DF34A78A90 /* CleanupSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupSelection.swift; sourceTree = "<group>"; };
 		CDFB8071AC3ABBB99161A5F7 /* CleanSpaceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanSpaceApp.swift; sourceTree = "<group>"; };
+		D8BEBDDEFE1AD29293128E34 /* BlurDetectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlurDetectionService.swift; sourceTree = "<group>"; };
+		DC549EFC0BE31425D72E68D4 /* VideoCompressionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCompressionService.swift; sourceTree = "<group>"; };
 		DD5C28D84132B2F9B78B7CC9 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		DE86D75F191B18089271ABBF /* PhotoGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoGroup.swift; sourceTree = "<group>"; };
+		DF107065658210870B762CDA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E8AC6B17B1C984B5AB8A653B /* PhotoSimilarityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSimilarityService.swift; sourceTree = "<group>"; };
+		F2B28744C88F26B5B8254479 /* SwipeCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeCardView.swift; sourceTree = "<group>"; };
 		F68147531BFC014CD863E0FF /* VideoScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoScanner.swift; sourceTree = "<group>"; };
 		F9B8888DEC2461228A30EE34 /* ContactItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactItem.swift; sourceTree = "<group>"; };
 		FD5EE96CCBDABE6B64F738C9 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
@@ -83,6 +138,7 @@
 			isa = PBXGroup;
 			children = (
 				FF53EF0778B24D1CE4612EEE /* CleanSpace.app */,
+				96618E4F52AB02CB317D6538 /* CleanSpaceWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -92,6 +148,7 @@
 			children = (
 				B6C3FB34C86161B35B4294BD /* CleanupManager.swift */,
 				7D97A699597A1FEC096C6E22 /* DashboardViewModel.swift */,
+				4F4C843C2234C2DCCEA4FE03 /* SwipeCleanerViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -100,6 +157,7 @@
 			isa = PBXGroup;
 			children = (
 				BAEA670148E534FB8CAD2F70 /* CleanSpace */,
+				CCA740AF46F9B6DE2638D5F4 /* CleanSpaceWidget */,
 				021E60EDB8E8BC8325C4A985 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -132,6 +190,8 @@
 		2B32F055711A231E4606A341 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				D8BEBDDEFE1AD29293128E34 /* BlurDetectionService.swift */,
+				0915C4FBCCB654B16153D6A2 /* CalendarScanner.swift */,
 				976B83FA0746A5BD7274D90F /* CleanupService.swift */,
 				2C820134BD78C1608B96BAFC /* ContactScanner.swift */,
 				FD5EE96CCBDABE6B64F738C9 /* PermissionManager.swift */,
@@ -139,6 +199,8 @@
 				E8AC6B17B1C984B5AB8A653B /* PhotoSimilarityService.swift */,
 				9D532D21DEB3A7492ABB29B0 /* ScreenshotScanner.swift */,
 				920C2AD4FCBFDDFABAFEC6D1 /* StorageService.swift */,
+				A5F60BEF32A745538DB3F290 /* VaultManager.swift */,
+				DC549EFC0BE31425D72E68D4 /* VideoCompressionService.swift */,
 				F68147531BFC014CD863E0FF /* VideoScanner.swift */,
 			);
 			path = Services;
@@ -148,13 +210,25 @@
 			isa = PBXGroup;
 			children = (
 				2462C763B45FFD88838314E7 /* LargeVideosView.swift */,
+				5A27F1033E72AC36B920595B /* VideoCompressorView.swift */,
 			);
 			path = LargeVideos;
+			sourceTree = "<group>";
+		};
+		314602518D331C510257A742 /* SwipeCleaner */ = {
+			isa = PBXGroup;
+			children = (
+				F2B28744C88F26B5B8254479 /* SwipeCardView.swift */,
+				9F861F401BFCB708E28DB903 /* SwipeCleanerView.swift */,
+			);
+			path = SwipeCleaner;
 			sourceTree = "<group>";
 		};
 		3FCAD440CE08B7B700958ED0 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				FBDFFA3C1D032BF30741BDA3 /* BlurryPhotos */,
+				829638B3900346948216802A /* Calendar */,
 				BECE6A24C06BD0619CCDFC3B /* Common */,
 				DAC8AC82E70BCD309745D3E2 /* Contacts */,
 				2143A4536F762755B6BEF1A3 /* Dashboard */,
@@ -164,6 +238,8 @@
 				D67711DC558B6D003DB1C0C1 /* Screenshots */,
 				D87CFD8FF4B5BAA17F8D0B53 /* SimilarPhotos */,
 				A571BE8C05FCE585937CA06F /* SpaceFreed */,
+				314602518D331C510257A742 /* SwipeCleaner */,
+				C0C269E0F32E3AD26E05D048 /* Vault */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -174,6 +250,14 @@
 				CDFB8071AC3ABBB99161A5F7 /* CleanSpaceApp.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		829638B3900346948216802A /* Calendar */ = {
+			isa = PBXGroup;
+			children = (
+				A1A179A064F77A7A370B2023 /* CalendarCleanupView.swift */,
+			);
+			path = Calendar;
 			sourceTree = "<group>";
 		};
 		A571BE8C05FCE585937CA06F /* SpaceFreed */ = {
@@ -204,6 +288,25 @@
 				9374C2FC3C5D0CB565DD3645 /* PHAssetThumbnailView.swift */,
 			);
 			path = Common;
+			sourceTree = "<group>";
+		};
+		C0C269E0F32E3AD26E05D048 /* Vault */ = {
+			isa = PBXGroup;
+			children = (
+				66A56DBB28FA3422F81977CF /* VaultLockView.swift */,
+				3C4F30167C1ADF407C6D6901 /* VaultMediaDetailView.swift */,
+				719B074BF30BFE63FE71BD71 /* VaultView.swift */,
+			);
+			path = Vault;
+			sourceTree = "<group>";
+		};
+		CCA740AF46F9B6DE2638D5F4 /* CleanSpaceWidget */ = {
+			isa = PBXGroup;
+			children = (
+				6CA2384431A764E541127076 /* CleanSpaceWidget.swift */,
+				DF107065658210870B762CDA /* Info.plist */,
+			);
+			path = CleanSpaceWidget;
 			sourceTree = "<group>";
 		};
 		D67711DC558B6D003DB1C0C1 /* Screenshots */ = {
@@ -247,6 +350,14 @@
 			path = Permissions;
 			sourceTree = "<group>";
 		};
+		FBDFFA3C1D032BF30741BDA3 /* BlurryPhotos */ = {
+			isa = PBXGroup;
+			children = (
+				06D6DA6D5AACA15E9240D115 /* BlurryPhotosView.swift */,
+			);
+			path = BlurryPhotos;
+			sourceTree = "<group>";
+		};
 		FF48F2007F3957358E2294A9 /* Review */ = {
 			isa = PBXGroup;
 			children = (
@@ -258,15 +369,34 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		390DE4A41A85CAD0FD530FE2 /* CleanSpaceWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 694964358221396C96FF8BDC /* Build configuration list for PBXNativeTarget "CleanSpaceWidget" */;
+			buildPhases = (
+				1BF1A60DBC735F4FB857559D /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CleanSpaceWidget;
+			packageProductDependencies = (
+			);
+			productName = CleanSpaceWidget;
+			productReference = 96618E4F52AB02CB317D6538 /* CleanSpaceWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		D8A81AA13FE74731C30086A1 /* CleanSpace */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 86920A7A71DEF259450C46F5 /* Build configuration list for PBXNativeTarget "CleanSpace" */;
 			buildPhases = (
 				B73C8FEF660F5F3FB5C9B60D /* Sources */,
+				A7F537D76FE5F1C4B5F624BE /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				46A6CBFE90E1ED68629A3BB0 /* PBXTargetDependency */,
 			);
 			name = CleanSpace;
 			packageProductDependencies = (
@@ -301,16 +431,29 @@
 			projectRoot = "";
 			targets = (
 				D8A81AA13FE74731C30086A1 /* CleanSpace */,
+				390DE4A41A85CAD0FD530FE2 /* CleanSpaceWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1BF1A60DBC735F4FB857559D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				51D963B0E44098EAD2E32F17 /* CleanSpaceWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B73C8FEF660F5F3FB5C9B60D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				BC61007C4AEF2F98DBD53740 /* AppTheme.swift in Sources */,
+				E11AAB88945E97B3172D70B9 /* BlurDetectionService.swift in Sources */,
+				C473E43638429907AE1D3EC1 /* BlurryPhotosView.swift in Sources */,
+				1E4C8B5EB40A49802994B531 /* CalendarCleanupView.swift in Sources */,
+				57C35616ED3A457CAA289301 /* CalendarScanner.swift in Sources */,
 				F575F19B99FDB8DA582E16B9 /* CategoryCardView.swift in Sources */,
 				D8E8CBBE62A8B27EAB794722 /* CleanSpaceApp.swift in Sources */,
 				A99318576728DC3D4240E7D8 /* CleanupManager.swift in Sources */,
@@ -339,6 +482,15 @@
 				11033332EC906A99EC94691B /* StorageGaugeView.swift in Sources */,
 				68E29F90807112E442F9EB99 /* StorageInfo.swift in Sources */,
 				7CFDA8445A41A41D72834342 /* StorageService.swift in Sources */,
+				5E06FF033D1E7543C4F8AC5C /* SwipeCardView.swift in Sources */,
+				A9103E0A14B53228EC5EE54B /* SwipeCleanerView.swift in Sources */,
+				816DFEEAEA66F4B722537C62 /* SwipeCleanerViewModel.swift in Sources */,
+				2F4CCCAF6CBA8FF6BCA995E6 /* VaultLockView.swift in Sources */,
+				CE261B5F52D4DF5EFB7EA3C4 /* VaultManager.swift in Sources */,
+				F13EB3D87ED8964D4A1D4391 /* VaultMediaDetailView.swift in Sources */,
+				6C6F9A2FCEC7FA84024AE3AD /* VaultView.swift in Sources */,
+				2D5D43780D2315E6A34327AD /* VideoCompressionService.swift in Sources */,
+				375040685B17F2C082B78F9C /* VideoCompressorView.swift in Sources */,
 				7A465EE9876658645B7F5454 /* VideoGroup.swift in Sources */,
 				7516F0C3CC673FD3551B1515 /* VideoItem.swift in Sources */,
 				361EA4D44E7084EE8F0B69AF /* VideoScanner.swift in Sources */,
@@ -346,6 +498,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		46A6CBFE90E1ED68629A3BB0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 390DE4A41A85CAD0FD530FE2 /* CleanSpaceWidget */;
+			targetProxy = 7328441C9294F447BA26E8B2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		4B1BF0C67E6A8A3D2419BF48 /* Debug */ = {
@@ -433,6 +593,48 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.cleanspace.app;
 				PRODUCT_NAME = CleanSpace;
 				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		7C6121FC698D7529D15EE55E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				INFOPLIST_FILE = CleanSpaceWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.cleanspace.app.CleanSpaceWidget;
+				PRODUCT_NAME = CleanSpaceWidget;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		92A90F434C8FECE41863B25E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				INFOPLIST_FILE = CleanSpaceWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.cleanspace.app.CleanSpaceWidget;
+				PRODUCT_NAME = CleanSpaceWidget;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
@@ -527,6 +729,15 @@
 			buildConfigurations = (
 				4B1BF0C67E6A8A3D2419BF48 /* Debug */,
 				BBEFEED64818D620E65887B4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		694964358221396C96FF8BDC /* Build configuration list for PBXNativeTarget "CleanSpaceWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7C6121FC698D7529D15EE55E /* Debug */,
+				92A90F434C8FECE41863B25E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

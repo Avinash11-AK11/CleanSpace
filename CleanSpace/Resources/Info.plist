@@ -23,9 +23,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>CleanSpace needs access to your photo library to detect duplicate photos, similar shots, screenshots, and large videos so you can safely free up storage. All scans run completely on your device.</string>
+	<string>CleanSpace needs access to your photo library to detect duplicate photos, similar shots, screenshots, blurry photos, and large videos so you can safely free up storage. All scans run completely on your device.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>CleanSpace needs access to your contacts to identify duplicate or redundant contact entries so you can clean and merge them safely. Your contacts never leave your device.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>CleanSpace uses Face ID to securely authenticate and unlock your private photo vault.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>CleanSpace needs calendar access to help you find and clear expired past events and clutter directly on your device.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>CleanSpace needs full calendar access to safely clear expired past events directly on your device.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

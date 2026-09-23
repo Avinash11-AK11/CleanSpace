@@ -33,3 +33,24 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
         ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS: NO
+    dependencies:
+      - target: CleanSpaceWidget
+
+  CleanSpaceWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: CleanSpaceWidget
+        excludes:
+          - "**/.DS_Store"
+    settings:
+      base:
+        PRODUCT_NAME: CleanSpaceWidget
+        PRODUCT_BUNDLE_IDENTIFIER: com.cleanspace.app.CleanSpaceWidget
+        INFOPLIST_FILE: CleanSpaceWidget/Info.plist
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: "5.9"
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_ALLOWED: NO

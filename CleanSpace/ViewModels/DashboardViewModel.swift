@@ -23,9 +23,11 @@ final class DashboardViewModel: ObservableObject {
     @Published var cleanableScreenshotBytes: Int64 = 0
     @Published var cleanableVideoBytes: Int64 = 0
     @Published var cleanableDuplicateVideoBytes: Int64 = 0
+    @Published var blurryPhotos: [BlurryPhotoItem] = []
+    @Published var cleanableBlurryBytes: Int64 = 0
     
     var totalCleanableBytes: Int64 {
-        cleanablePhotoBytes + cleanableScreenshotBytes + cleanableVideoBytes
+        cleanablePhotoBytes + cleanableScreenshotBytes + cleanableVideoBytes + cleanableBlurryBytes
     }
     
     var formattedTotalCleanable: String {
@@ -86,7 +88,17 @@ final class DashboardViewModel: ObservableObject {
             self.cleanablePhotoBytes = groups.reduce(0) { $0 + $1.cleanableSize }
             print("CleanSpace: Found \(groups.count) similar photo groups")
             
-            // 3. Large & Duplicate Videos
+            // 3. Blurry Photos
+            currentTask = "Detecting blurry and out-of-focus photos..."
+            let blurry = await BlurDetectionService.shared.detectBlurryPhotos(photos: allPhotoAssets)
+            self.blurryPhotos = blurry
+            self.cleanableBlurryBytes = blurry.reduce(0) { $0 + $1.photo.fileSize }
+            for b in blurry {
+                CleanupManager.shared.allPhotosMap[b.id] = b.photo
+            }
+            print("CleanSpace: Found \(blurry.count) blurry photos")
+            
+            // 4. Large & Duplicate Videos
             currentTask = "Scanning for large and duplicate videos..."
             scanProgress = 0.7
             let videos = VideoScanner.shared.fetchLargeVideos()
