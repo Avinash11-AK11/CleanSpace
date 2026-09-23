@@ -26,6 +26,15 @@ enum CalendarFilterPeriod: String, CaseIterable, Identifiable {
     
     var id: String { rawValue }
     
+    var shortTitle: String {
+        switch self {
+        case .oneMonth: return "> 30 Days"
+        case .threeMonths: return "> 90 Days"
+        case .oneYear: return "> 1 Year"
+        case .allPast: return "All Past"
+        }
+    }
+    
     var cutoffDate: Date {
         let calendar = Calendar.current
         let now = Date()

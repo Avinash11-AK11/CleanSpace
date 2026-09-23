@@ -13,14 +13,32 @@ struct CalendarCleanupView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Filter Picker
+            // Filter Pills Picker
             VStack(spacing: 12) {
-                Picker("Filter Period", selection: $selectedPeriod) {
-                    ForEach(CalendarFilterPeriod.allCases) { period in
-                        Text(period.rawValue).tag(period)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(CalendarFilterPeriod.allCases) { period in
+                            let isSelected = selectedPeriod == period
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    selectedPeriod = period
+                                }
+                            } label: {
+                                Text(period.shortTitle)
+                                    .font(.subheadline)
+                                    .fontWeight(isSelected ? .bold : .medium)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
+                                    .background(isSelected ? AppTheme.accentEmerald : Color(uiColor: .tertiarySystemFill))
+                                    .foregroundColor(isSelected ? .white : .primary)
+                                    .clipShape(Capsule())
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
                     }
+                    .padding(.horizontal, 16)
                 }
-                .pickerStyle(.segmented)
+                .padding(.top, 8)
                 .onChange(of: selectedPeriod) {
                     Task {
                         await scanner.fetchPastEvents(period: selectedPeriod)
@@ -47,8 +65,9 @@ struct CalendarCleanupView: View {
                         .foregroundColor(AppTheme.accentEmerald)
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 6)
             }
-            .padding()
             .background(AppTheme.cardBackground)
             
             // Content List
@@ -66,6 +85,7 @@ struct CalendarCleanupView: View {
                     
                     Text("Calendar Access Needed")
                         .font(.headline)
+                        .foregroundColor(.primary)
                     
                     Text("CleanSpace scans your past calendar events locally to help declutter expired entries and spam invites.")
                         .font(.subheadline)
@@ -93,6 +113,7 @@ struct CalendarCleanupView: View {
                         .foregroundColor(AppTheme.accentEmerald)
                     Text("Calendar is clean!")
                         .font(.headline)
+                        .foregroundColor(.primary)
                     Text("No old events matching '\(selectedPeriod.rawValue)' were found.")
                         .font(.caption)
                         .foregroundColor(AppTheme.subtleGray)
@@ -101,7 +122,7 @@ struct CalendarCleanupView: View {
             } else {
                 List {
                     ForEach(scanner.events) { event in
-                        HStack(spacing: 12) {
+                        HStack(spacing: 14) {
                             Button {
                                 if selectedEventIds.contains(event.id) {
                                     selectedEventIds.remove(event.id)
@@ -115,10 +136,10 @@ struct CalendarCleanupView: View {
                             }
                             .buttonStyle(PlainButtonStyle())
                             
-                            VStack(alignment: .leading, spacing: 3) {
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text(event.title)
                                     .font(.subheadline.bold())
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.primary)
                                     .lineLimit(1)
                                 
                                 HStack(spacing: 6) {
@@ -147,6 +168,7 @@ struct CalendarCleanupView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("\(selectedEventIds.count) Events Selected")
                                 .font(.subheadline.bold())
+                                .foregroundColor(.primary)
                             Text("Ready to clean")
                                 .font(.caption)
                                 .foregroundColor(AppTheme.accentEmerald)

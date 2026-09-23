@@ -28,15 +28,15 @@ struct VideoCompressorView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: 20) {
                     // Video Overview Card
                     HStack(spacing: 16) {
                         PHAssetThumbnailView(asset: video.asset)
-                            .frame(width: 88, height: 88)
+                            .frame(width: 80, height: 80)
                             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                         
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Current Video")
+                            Text("Selected Video")
                                 .font(.caption)
                                 .fontWeight(.semibold)
                                 .foregroundColor(AppTheme.subtleGray)
@@ -44,6 +44,7 @@ struct VideoCompressorView: View {
                             Text(video.formattedSize)
                                 .font(.title3)
                                 .fontWeight(.bold)
+                                .foregroundColor(.primary)
                             
                             HStack(spacing: 8) {
                                 Text(video.qualityLabel)
@@ -125,23 +126,24 @@ struct VideoCompressorView: View {
                                 .foregroundColor(AppTheme.subtleGray)
                                 .tracking(1.0)
                             
-                            HStack(spacing: 20) {
+                            HStack(spacing: 24) {
                                 VStack {
                                     Text(video.formattedSize)
-                                        .font(.headline)
-                                        .foregroundColor(.secondary)
+                                        .font(.title3)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(AppTheme.subtleGray)
                                     Text("Before")
                                         .font(.caption2)
                                         .foregroundColor(AppTheme.subtleGray)
                                 }
                                 
                                 Image(systemName: "arrow.right")
-                                    .foregroundColor(AppTheme.accentEmerald)
                                     .font(.title3)
+                                    .foregroundColor(AppTheme.accentEmerald)
                                 
                                 VStack {
                                     Text(ByteCountFormatter.string(fromByteCount: estimatedSize, countStyle: .file))
-                                        .font(.headline)
+                                        .font(.title3)
                                         .fontWeight(.bold)
                                         .foregroundColor(.primary)
                                     Text("After")
@@ -167,6 +169,7 @@ struct VideoCompressorView: View {
                                 Text("Delete Original Video")
                                     .font(.subheadline)
                                     .fontWeight(.medium)
+                                    .foregroundColor(.primary)
                                 Text("Safely removes the heavy uncompressed video after saving")
                                     .font(.caption)
                                     .foregroundColor(AppTheme.subtleGray)
@@ -223,6 +226,7 @@ struct VideoCompressorView: View {
                             Text("Compression Complete!")
                                 .font(.title2)
                                 .fontWeight(.bold)
+                                .foregroundColor(.primary)
                             
                             Text("The compressed video has been saved to your Photo Library.")
                                 .font(.subheadline)
@@ -255,9 +259,9 @@ struct VideoCompressorView: View {
                         .padding(.horizontal)
                     }
                     
-                    Spacer().frame(height: 40)
+                    Spacer().frame(height: 30)
                 }
-                .padding(.top, 12)
+                .padding(.top, 8)
             }
             .background(AppTheme.primaryBackground)
             .navigationTitle("Compress Video")
@@ -268,6 +272,7 @@ struct VideoCompressorView: View {
                         Button("Cancel") {
                             dismiss()
                         }
+                        .foregroundColor(AppTheme.accentEmerald)
                     }
                 }
             }
@@ -283,7 +288,7 @@ struct VideoCompressorView: View {
         Task {
             isCompressing = true
             progress = 0.05
-            statusText = "Initializing video export..."
+            statusText = "Preparing video export..."
             
             do {
                 let tempURL = try await VideoCompressionService.shared.compressVideo(

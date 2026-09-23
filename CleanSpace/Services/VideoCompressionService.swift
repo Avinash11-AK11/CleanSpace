@@ -73,27 +73,42 @@ final class VideoCompressionService: @unchecked Sendable {
             }
         }
         
+        // Find compatible export preset or fallback to medium/passthrough
+        let compatiblePresets = AVAssetExportSession.exportPresets(compatibleWith: avAsset)
+        var targetPreset = preset.avPresetName
+        if !compatiblePresets.contains(targetPreset) {
+            if compatiblePresets.contains(AVAssetExportPreset1280x720) {
+                targetPreset = AVAssetExportPreset1280x720
+            } else if compatiblePresets.contains(AVAssetExportPresetMediumQuality) {
+                targetPreset = AVAssetExportPresetMediumQuality
+            } else if let first = compatiblePresets.first {
+                targetPreset = first
+            }
+        }
+        
         let outputURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
             .appendingPathExtension("mp4")
         
-        // Remove existing file if any
         try? FileManager.default.removeItem(at: outputURL)
         
-        guard let exportSession = AVAssetExportSession(asset: avAsset, presetName: preset.avPresetName) else {
-            throw NSError(domain: "CleanSpaceVideoCompression", code: -2, userInfo: [NSLocalizedDescriptionKey: "Preset not supported for this video"])
+        guard let exportSession = AVAssetExportSession(asset: avAsset, presetName: targetPreset) else {
+            throw NSError(domain: "CleanSpaceVideoCompression", code: -2, userInfo: [NSLocalizedDescriptionKey: "Preset not supported for this video format"])
         }
         
         exportSession.outputURL = outputURL
         exportSession.outputFileType = .mp4
         exportSession.shouldOptimizeForNetworkUse = true
         
-        // Start progress tracking timer
-        let isExporting = true
         let progressTask = Task {
-            while isExporting && exportSession.status == .exporting || exportSession.status == .waiting {
-                let progress = Double(exportSession.progress)
-                progressHandler?(progress)
+            while !Task.isCancelled {
+                let currentStatus = exportSession.status
+                if currentStatus == .exporting || currentStatus == .waiting {
+                    let progress = Double(exportSession.progress)
+                    progressHandler?(max(0.05, progress))
+                } else {
+                    break
+                }
                 try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
             }
         }
@@ -106,12 +121,12 @@ final class VideoCompressionService: @unchecked Sendable {
             progressHandler?(1.0)
             return outputURL
         case .failed:
-            let err = exportSession.error ?? NSError(domain: "CleanSpaceVideoCompression", code: -3, userInfo: [NSLocalizedDescriptionKey: "Compression export failed"])
+            let err = exportSession.error ?? NSError(domain: "CleanSpaceVideoCompression", code: -3, userInfo: [NSLocalizedDescriptionKey: "Video compression export failed"])
             throw err
         case .cancelled:
             throw NSError(domain: "CleanSpaceVideoCompression", code: -4, userInfo: [NSLocalizedDescriptionKey: "Export was cancelled"])
         default:
-            throw NSError(domain: "CleanSpaceVideoCompression", code: -5, userInfo: [NSLocalizedDescriptionKey: "Unknown export status"])
+            throw NSError(domain: "CleanSpaceVideoCompression", code: -5, userInfo: [NSLocalizedDescriptionKey: "Unknown export status: \(exportSession.status.rawValue)"])
         }
     }
     

@@ -112,6 +112,7 @@ struct LargeVideosView: View {
             VideoCompressorView(video: video) {
                 syncDeletedVideos()
             }
+            .presentationDragIndicator(.visible)
         }
     }
     
