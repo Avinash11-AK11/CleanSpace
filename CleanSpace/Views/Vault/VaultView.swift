@@ -81,6 +81,7 @@ struct VaultView: View {
                 .padding(.horizontal, 40)
             
             Button {
+                HapticManager.shared.impact(.light)
                 showingAuthSheet = true
             } label: {
                 HStack {
@@ -89,6 +90,7 @@ struct VaultView: View {
                 }
             }
             .primaryButtonStyle(bg: AppTheme.accentPurple)
+            .buttonStyle(BounceButtonStyle())
             .padding(.horizontal, 40)
             
             Spacer()
@@ -116,6 +118,7 @@ struct VaultView: View {
                     Spacer()
                     
                     Button {
+                        HapticManager.shared.impact(.light)
                         showingPhotoPicker = true
                     } label: {
                         HStack(spacing: 4) {
@@ -129,10 +132,10 @@ struct VaultView: View {
                         .background(AppTheme.accentPurple)
                         .clipShape(Capsule())
                     }
+                    .buttonStyle(BounceButtonStyle())
                 }
-                .padding()
-                .background(AppTheme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .padding(16)
+                .cleanCardStyle(cornerRadius: 18)
                 .padding(.horizontal)
                 .padding(.top, 8)
                 
@@ -221,7 +224,7 @@ private struct VaultThumbnailCell: View {
                     .frame(minWidth: 0, maxWidth: .infinity)
                     .aspectRatio(1.0, contentMode: .fit)
                     .clipped()
-                    .cornerRadius(8)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             } else {
                 Rectangle()
                     .fill(AppTheme.cardBackground)
@@ -229,7 +232,7 @@ private struct VaultThumbnailCell: View {
                     .overlay(
                         ProgressView().tint(AppTheme.accentPurple)
                     )
-                    .cornerRadius(8)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             
             HStack(spacing: 3) {
@@ -241,12 +244,17 @@ private struct VaultThumbnailCell: View {
                     .font(.system(size: 9, weight: .bold))
             }
             .foregroundColor(.white)
-            .padding(.horizontal, 5)
-            .padding(.vertical, 2)
-            .background(Color.black.opacity(0.7))
-            .clipShape(RoundedRectangle(cornerRadius: 4))
-            .padding(4)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(Color.black.opacity(0.72))
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .padding(6)
         }
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(AppTheme.cardBorder, lineWidth: 1)
+        )
         .task {
             let url = vaultManager.fileURL(for: item)
             if !item.isVideo {

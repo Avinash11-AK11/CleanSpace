@@ -53,35 +53,44 @@ struct LargeVideosView: View {
                 .padding(.top, 8)
             }
             
-            // Floating review bar
+            // Floating glass action bar
             if cleanupManager.totalSelectedCount > 0 {
-                VStack(spacing: 0) {
-                    Divider()
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(cleanupManager.formattedTotalSelectedCount)
-                                .font(.subheadline)
-                                .fontWeight(.bold)
-                            Text("Frees: \(cleanupManager.formattedEstimatedBytes)")
-                                .font(.caption)
-                                .foregroundColor(AppTheme.accentEmerald)
-                        }
-                        Spacer()
-                        NavigationLink(destination: ReviewView()) {
-                            Text("Review Cleanup")
-                                .font(.subheadline)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                                .background(AppTheme.accentEmerald)
-                                .clipShape(Capsule())
-                        }
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(cleanupManager.formattedTotalSelectedCount)
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                        Text("Frees: \(cleanupManager.formattedEstimatedBytes)")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(AppTheme.accentEmerald)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 14)
-                    .background(.ultraThinMaterial)
+                    Spacer()
+                    NavigationLink(destination: ReviewView()) {
+                        HStack(spacing: 6) {
+                            Text("Review Cleanup")
+                            Image(systemName: "arrow.right")
+                        }
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 11)
+                        .background(AppTheme.emeraldGradient)
+                        .clipShape(Capsule())
+                        .shadow(color: AppTheme.accentEmerald.opacity(0.35), radius: 6, x: 0, y: 3)
+                    }
+                    .buttonStyle(BounceButtonStyle())
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(AppTheme.cardBorder, lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .background(AppTheme.primaryBackground)

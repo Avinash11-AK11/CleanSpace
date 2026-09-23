@@ -14,6 +14,8 @@ struct SimilarPhotosView: View {
         var id: String { rawValue }
     }
     
+    @State private var inspectingPhoto: PhotoItem? = nil
+    
     init(groups: Binding<[PhotoGroup]>, allPhotos: Binding<[PhotoItem]>) {
         self._groups = groups
         self._allPhotos = allPhotos
@@ -55,45 +57,57 @@ struct SimilarPhotosView: View {
                         allPhotosTabContent
                     }
                     
-                    Spacer().frame(height: 100)
+                    Spacer().frame(height: 110)
                 }
                 .padding(.top, 8)
             }
             
-            // Bottom floating action bar
+            // Floating glass action bar
             if cleanupManager.totalSelectedCount > 0 {
-                VStack(spacing: 0) {
-                    Divider()
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(cleanupManager.formattedTotalSelectedCount)
-                                .font(.subheadline)
-                                .fontWeight(.bold)
-                            Text("Frees: \(cleanupManager.formattedEstimatedBytes)")
-                                .font(.caption)
-                                .foregroundColor(AppTheme.accentEmerald)
-                        }
-                        Spacer()
-                        NavigationLink(destination: ReviewView()) {
-                            Text("Review Cleanup")
-                                .font(.subheadline)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                                .background(AppTheme.accentEmerald)
-                                .clipShape(Capsule())
-                        }
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(cleanupManager.formattedTotalSelectedCount)
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                        Text("Frees: \(cleanupManager.formattedEstimatedBytes)")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(AppTheme.accentEmerald)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 14)
-                    .background(.ultraThinMaterial)
+                    Spacer()
+                    NavigationLink(destination: ReviewView()) {
+                        HStack(spacing: 6) {
+                            Text("Review Cleanup")
+                            Image(systemName: "arrow.right")
+                        }
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 11)
+                        .background(AppTheme.emeraldGradient)
+                        .clipShape(Capsule())
+                        .shadow(color: AppTheme.accentEmerald.opacity(0.35), radius: 6, x: 0, y: 3)
+                    }
+                    .buttonStyle(BounceButtonStyle())
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(AppTheme.cardBorder, lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .background(AppTheme.primaryBackground)
         .navigationTitle("Photos")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $inspectingPhoto) { photo in
+            PhotoDetailInspectorSheet(photo: photo)
+        }
         .onAppear {
             syncDeletedPhotos()
         }
@@ -140,8 +154,7 @@ struct SimilarPhotosView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(groups.count == 1 ? "1 Group Identified" : "\(groups.count) Groups Identified")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
                     Text("Best photo in each group marked with ⭐")
                         .font(.caption)
                         .foregroundColor(AppTheme.subtleGray)
@@ -149,25 +162,32 @@ struct SimilarPhotosView: View {
                 
                 Spacer()
                 
-                Button("Auto-Select Extras") {
-                    withAnimation {
+                Button {
+                    HapticManager.shared.impact(.medium)
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                         cleanupManager.selectAllDuplicatesExcludingBest(groups: groups)
                     }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "wand.and.stars")
+                            .font(.system(size: 12, weight: .bold))
+                        Text("Auto-Select Extras")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(AppTheme.accentBlue.opacity(0.14))
+                    .foregroundColor(AppTheme.accentBlue)
+                    .clipShape(Capsule())
                 }
-                .font(.caption)
-                .fontWeight(.semibold)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(AppTheme.accentBlue.opacity(0.12))
-                .foregroundColor(AppTheme.accentBlue)
-                .clipShape(Capsule())
+                .buttonStyle(BounceButtonStyle())
             }
             .padding(.horizontal)
             
             // Groups List
             LazyVStack(spacing: 16) {
                 ForEach(groups) { group in
-                    PhotoGroupCard(group: group)
+                    PhotoGroupCard(group: group, onInspect: { inspectingPhoto = $0 })
                 }
             }
             .padding(.horizontal)
@@ -267,6 +287,28 @@ struct SimilarPhotosView: View {
                             }
                             .padding(6)
                             
+                            // Bottom right: Quick inspect button
+                            VStack {
+                                Spacer()
+                                HStack {
+                                    Spacer()
+                                    Button {
+                                        HapticManager.shared.impact(.light)
+                                        inspectingPhoto = item
+                                    } label: {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.black.opacity(0.55))
+                                                .frame(width: 24, height: 24)
+                                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                                .font(.system(size: 9, weight: .bold))
+                                                .foregroundColor(.white)
+                                        }
+                                    }
+                                }
+                                .padding(4)
+                            }
+                            
                             // Bottom left: File Size tag
                             VStack {
                                 Spacer()
@@ -317,6 +359,7 @@ struct SimilarPhotosView: View {
 // MARK: - Photo Group Card
 struct PhotoGroupCard: View {
     let group: PhotoGroup
+    var onInspect: ((PhotoItem) -> Void)? = nil
     @ObservedObject private var cleanupManager = CleanupManager.shared
     
     var body: some View {
@@ -346,6 +389,7 @@ struct PhotoGroupCard: View {
                         let isSelected = cleanupManager.selectedPhotoIds.contains(photo.id)
                         
                         Button {
+                            HapticManager.shared.selection()
                             withAnimation(.spring(response: 0.3)) {
                                 cleanupManager.togglePhoto(photo)
                             }
@@ -396,6 +440,28 @@ struct PhotoGroupCard: View {
                                 }
                                 .padding(6)
                                 
+                                // Bottom right: Expand button
+                                VStack {
+                                    Spacer()
+                                    HStack {
+                                        Spacer()
+                                        Button {
+                                            HapticManager.shared.impact(.light)
+                                            onInspect?(photo)
+                                        } label: {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(Color.black.opacity(0.55))
+                                                    .frame(width: 22, height: 22)
+                                                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                                    .font(.system(size: 8, weight: .bold))
+                                                    .foregroundColor(.white)
+                                            }
+                                        }
+                                    }
+                                    .padding(4)
+                                }
+                                
                                 // Size tag
                                 VStack {
                                     Spacer()
@@ -419,7 +485,74 @@ struct PhotoGroupCard: View {
             }
         }
         .padding(14)
-        .background(AppTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .cleanCardStyle(cornerRadius: 18)
+    }
+}
+
+// MARK: - Photo Detail Inspector Sheet
+struct PhotoDetailInspectorSheet: View {
+    let photo: PhotoItem
+    @ObservedObject private var cleanupManager = CleanupManager.shared
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    PHAssetThumbnailView(asset: photo.asset)
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    
+                    VStack(spacing: 14) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(photo.formattedSize)
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                Text("\(photo.asset.pixelWidth) × \(photo.asset.pixelHeight) • \(photo.asset.creationDate?.formatted(date: .abbreviated, time: .shortened) ?? "Photo")")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            Spacer()
+                            
+                            let isSelected = cleanupManager.selectedPhotoIds.contains(photo.id)
+                            Button {
+                                HapticManager.shared.impact(.light)
+                                withAnimation {
+                                    cleanupManager.togglePhoto(photo)
+                                }
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                    Text(isSelected ? "Marked for Delete" : "Keep Photo")
+                                }
+                                .font(.subheadline.bold())
+                                .foregroundColor(isSelected ? AppTheme.accentRed : AppTheme.accentEmerald)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(Color.white.opacity(0.15))
+                                .clipShape(Capsule())
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                    }
+                    .background(Color.black.opacity(0.85))
+                }
+            }
+            .navigationTitle("Inspect Photo")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .font(.body.bold())
+                    .foregroundColor(AppTheme.accentEmerald)
+                }
+            }
+        }
     }
 }

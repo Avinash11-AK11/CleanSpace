@@ -70,8 +70,7 @@ struct SwipeCleanerView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(20)
-                        .background(AppTheme.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .cleanCardStyle(cornerRadius: 20)
                         .padding(.horizontal)
                         
                         Spacer()
@@ -79,6 +78,7 @@ struct SwipeCleanerView: View {
                         VStack(spacing: 12) {
                             if !viewModel.queuedForDeletion.isEmpty {
                                 Button("Review & Clean (\(viewModel.queuedForDeletion.count))") {
+                                    HapticManager.shared.impact(.medium)
                                     // Queue into cleanup manager
                                     for item in viewModel.queuedForDeletion {
                                         cleanupManager.selectedPhotoIds.insert(item.id)
@@ -87,14 +87,17 @@ struct SwipeCleanerView: View {
                                     navigateToReview = true
                                 }
                                 .primaryButtonStyle(bg: AppTheme.accentEmerald)
+                                .buttonStyle(BounceButtonStyle())
                             }
                             
                             Button("Done") {
+                                HapticManager.shared.impact(.light)
                                 dismiss()
                             }
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundColor(AppTheme.subtleGray)
+                            .padding(.vertical, 8)
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 20)
@@ -156,26 +159,30 @@ struct SwipeCleanerView: View {
                     .frame(maxHeight: .infinity)
                     
                     // Bottom Control Buttons
-                    HStack(spacing: 24) {
+                    HStack(spacing: 28) {
                         // Undo Button
                         Button {
+                            HapticManager.shared.selection()
                             withAnimation(.spring(response: 0.35)) {
                                 viewModel.undo()
                             }
                         } label: {
                             ZStack {
                                 Circle()
-                                    .fill(Color(uiColor: .systemFill))
+                                    .fill(Color(uiColor: .secondarySystemFill))
                                     .frame(width: 52, height: 52)
                                 Image(systemName: "arrow.uturn.backward")
                                     .font(.system(size: 18, weight: .bold))
                                     .foregroundColor(viewModel.history.isEmpty ? AppTheme.subtleGray.opacity(0.4) : .primary)
                             }
+                            .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
                         }
+                        .buttonStyle(BounceButtonStyle())
                         .disabled(viewModel.history.isEmpty)
                         
                         // Delete Button (Swipe Left)
                         Button {
+                            HapticManager.shared.impact(.medium)
                             withAnimation(.spring(response: 0.35)) {
                                 viewModel.swipe(decision: .delete)
                             }
@@ -184,14 +191,21 @@ struct SwipeCleanerView: View {
                                 Circle()
                                     .fill(AppTheme.accentRed.opacity(0.12))
                                     .frame(width: 68, height: 68)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(AppTheme.accentRed.opacity(0.3), lineWidth: 1.5)
+                                    )
                                 Image(systemName: "trash.fill")
                                     .font(.system(size: 26, weight: .bold))
                                     .foregroundColor(AppTheme.accentRed)
                             }
+                            .shadow(color: AppTheme.accentRed.opacity(0.15), radius: 8, x: 0, y: 4)
                         }
+                        .buttonStyle(BounceButtonStyle())
                         
                         // Keep Button (Swipe Right)
                         Button {
+                            HapticManager.shared.impact(.light)
                             withAnimation(.spring(response: 0.35)) {
                                 viewModel.swipe(decision: .keep)
                             }
@@ -200,13 +214,20 @@ struct SwipeCleanerView: View {
                                 Circle()
                                     .fill(AppTheme.accentEmerald.opacity(0.15))
                                     .frame(width: 68, height: 68)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(AppTheme.accentEmerald.opacity(0.3), lineWidth: 1.5)
+                                    )
                                 Image(systemName: "checkmark")
                                     .font(.system(size: 26, weight: .bold))
                                     .foregroundColor(AppTheme.accentEmerald)
                             }
+                            .shadow(color: AppTheme.accentEmerald.opacity(0.15), radius: 8, x: 0, y: 4)
                         }
+                        .buttonStyle(BounceButtonStyle())
                     }
-                    .padding(.bottom, 24)
+                    .padding(.vertical, 8)
+                    .padding(.bottom, 20)
                 }
             }
             .background(AppTheme.primaryBackground)

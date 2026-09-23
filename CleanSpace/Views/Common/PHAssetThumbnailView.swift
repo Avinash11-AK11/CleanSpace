@@ -37,7 +37,7 @@ struct PHAssetThumbnailView: View {
         let options = PHImageRequestOptions()
         options.isNetworkAccessAllowed = true
         options.deliveryMode = .fastFormat
-        options.resizeMode = .none
+        options.resizeMode = .fast
         
         manager.requestImage(
             for: asset,

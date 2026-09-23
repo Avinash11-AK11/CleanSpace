@@ -79,49 +79,44 @@ struct DashboardView: View {
         NavigationLink(destination: SwipeCleanerView(photos: viewModel.allPhotos)) {
             HStack(spacing: 14) {
                 ZStack {
-                    Circle()
-                        .fill(LinearGradient(colors: [AppTheme.accentEmerald, AppTheme.accentBlue], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(AppTheme.emeraldGradient)
                         .frame(width: 48, height: 48)
                     
                     Image(systemName: "hand.draw.fill")
-                        .font(.system(size: 22))
-                        .foregroundColor(.primary)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(.white)
                 }
                 
                 VStack(alignment: .leading, spacing: 3) {
-                    HStack {
+                    HStack(spacing: 6) {
                         Text("Swipe Photo Cleaner")
-                            .font(.headline)
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundColor(.primary)
                         Text("QUICK CLEAN")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(.black)
+                            .font(.system(size: 9, weight: .heavy))
+                            .foregroundColor(.white)
                             .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.vertical, 2.5)
                             .background(AppTheme.accentEmerald)
                             .clipShape(Capsule())
                     }
                     
                     Text("Swipe right to keep, swipe left to delete photos")
-                        .font(.caption)
+                        .font(.system(size: 13))
                         .foregroundColor(AppTheme.subtleGray)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
-                    .font(.caption.bold())
-                    .foregroundColor(AppTheme.subtleGray)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(Color(uiColor: .tertiaryLabel))
             }
             .padding(16)
-            .background(AppTheme.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(AppTheme.accentEmerald.opacity(0.3), lineWidth: 1)
-            )
+            .cleanCardStyle(cornerRadius: 20)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(BounceButtonStyle())
         .padding(.horizontal)
     }
     
@@ -129,32 +124,37 @@ struct DashboardView: View {
         VStack(spacing: 10) {
             if viewModel.isScanning {
                 VStack(spacing: 10) {
-                    ProgressView(value: viewModel.scanProgress)
-                        .tint(AppTheme.accentEmerald)
                     HStack {
+                        Image(systemName: "magnifyingglass.circle.fill")
+                            .foregroundColor(AppTheme.accentEmerald)
                         Text(viewModel.currentTask)
-                            .font(.caption)
-                            .foregroundColor(AppTheme.subtleGray)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
                         Spacer()
                         Text("\(Int(viewModel.scanProgress * 100))%")
-                            .font(.caption)
-                            .fontWeight(.bold)
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
                             .foregroundColor(AppTheme.accentEmerald)
                     }
+                    
+                    ProgressView(value: viewModel.scanProgress)
+                        .tint(AppTheme.accentEmerald)
                 }
-                .padding()
-                .background(AppTheme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .padding(16)
+                .cleanCardStyle(cornerRadius: 18)
                 .padding(.horizontal)
             } else {
                 Button(action: {
+                    HapticManager.shared.impact(.medium)
                     Task {
                         await viewModel.startFullScan()
                     }
                 }) {
-                    HStack {
+                    HStack(spacing: 8) {
                         Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 16, weight: .bold))
                         Text("Scan iPhone Storage")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
                     }
                 }
                 .primaryButtonStyle(bg: AppTheme.accentEmerald)
@@ -309,67 +309,84 @@ struct DashboardView: View {
                         .foregroundColor(AppTheme.subtleGray)
                 }
                 .padding(16)
-                .background(AppTheme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .cleanCardStyle(cornerRadius: 18)
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(BounceButtonStyle())
             .padding(.horizontal)
         }
     }
     
     private var toolbarIcons: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
             NavigationLink(destination: VaultView()) {
-                Image(systemName: vaultManager.isUnlocked ? "lock.open.fill" : "lock.fill")
-                    .foregroundColor(AppTheme.accentPurple)
+                ZStack {
+                    Circle()
+                        .fill(AppTheme.accentPurple.opacity(0.12))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: vaultManager.isUnlocked ? "lock.open.fill" : "lock.fill")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(AppTheme.accentPurple)
+                }
             }
             
             Button {
+                HapticManager.shared.selection()
                 showPermissionSheet = true
             } label: {
-                Image(systemName: "hand.raised.circle")
-                    .foregroundColor(AppTheme.accentBlue)
+                ZStack {
+                    Circle()
+                        .fill(AppTheme.accentBlue.opacity(0.12))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: "hand.raised.circle")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(AppTheme.accentBlue)
+                }
             }
         }
     }
     
     private var floatingReviewBar: some View {
-        VStack(spacing: 0) {
-            Divider()
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(cleanupManager.formattedTotalSelectedCount)
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                    Text("Frees up \(cleanupManager.formattedEstimatedBytes)")
-                        .font(.caption)
-                        .foregroundColor(AppTheme.accentEmerald)
-                }
-                
-                Spacer()
-                
-                NavigationLink(destination: ReviewView {
-                    Task {
-                        await viewModel.startFullScan()
-                    }
-                }) {
-                    HStack(spacing: 6) {
-                        Text("Review & Clean")
-                        Image(systemName: "arrow.right")
-                    }
-                    .font(.subheadline)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(AppTheme.accentEmerald)
-                    .clipShape(Capsule())
-                }
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(cleanupManager.formattedTotalSelectedCount)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                Text("Frees up \(cleanupManager.formattedEstimatedBytes)")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(AppTheme.accentEmerald)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 14)
-            .background(.ultraThinMaterial)
+            
+            Spacer()
+            
+            NavigationLink(destination: ReviewView {
+                Task {
+                    await viewModel.startFullScan()
+                }
+            }) {
+                HStack(spacing: 6) {
+                    Text("Review & Clean")
+                    Image(systemName: "arrow.right")
+                }
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 11)
+                .background(AppTheme.emeraldGradient)
+                .clipShape(Capsule())
+                .shadow(color: AppTheme.accentEmerald.opacity(0.35), radius: 6, x: 0, y: 3)
+            }
+            .buttonStyle(BounceButtonStyle())
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(AppTheme.cardBorder, lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 12)
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 }

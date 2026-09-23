@@ -91,17 +91,17 @@ struct SpaceFreedView: View {
                             }
                             .font(.caption.bold())
                             .foregroundColor(AppTheme.accentBlue)
-                            .padding(.horizontal, 12)
+                            .padding(.horizontal, 14)
                             .padding(.vertical, 8)
                             .background(AppTheme.accentBlue.opacity(0.12))
                             .clipShape(Capsule())
                         }
+                        .buttonStyle(BounceButtonStyle())
                     }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(24)
-                .background(AppTheme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .cleanCardStyle(cornerRadius: 22)
                 .padding(.horizontal, 24)
                 
                 // Device Health Note
@@ -116,16 +116,19 @@ struct SpaceFreedView: View {
                 Spacer()
                 
                 Button("Done") {
+                    HapticManager.shared.impact(.light)
                     dismiss()
                     onDone?()
                 }
                 .primaryButtonStyle(bg: AppTheme.accentEmerald)
+                .buttonStyle(BounceButtonStyle())
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
             }
         }
         .navigationBarBackButtonHidden(true)
         .onAppear {
+            HapticManager.shared.notification(.success)
             animateParticles = true
             let prev = UserDefaults.standard.integer(forKey: "lifetime_freed_bytes")
             UserDefaults.standard.set(prev + Int(cleanupManager.lastFreedBytes), forKey: "lifetime_freed_bytes")

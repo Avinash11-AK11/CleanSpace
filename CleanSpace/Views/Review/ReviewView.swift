@@ -55,8 +55,7 @@ struct ReviewView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(20)
-                    .background(AppTheme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .cleanCardStyle(cornerRadius: 22)
                     .padding(.horizontal)
                     
                     // Breakdown List
@@ -77,6 +76,7 @@ struct ReviewView: View {
                                 icon: "photo.on.rectangle.angled",
                                 iconColor: AppTheme.accentBlue
                             ) {
+                                HapticManager.shared.selection()
                                 cleanupManager.selectedPhotoIds.removeAll()
                             }
                         }
@@ -90,6 +90,7 @@ struct ReviewView: View {
                                 icon: "camera.viewfinder",
                                 iconColor: AppTheme.accentPurple
                             ) {
+                                HapticManager.shared.selection()
                                 cleanupManager.selectedScreenshotIds.removeAll()
                             }
                         }
@@ -103,6 +104,7 @@ struct ReviewView: View {
                                 icon: "film.stack",
                                 iconColor: AppTheme.accentOrange
                             ) {
+                                HapticManager.shared.selection()
                                 cleanupManager.selectedVideoIds.removeAll()
                             }
                         }
@@ -116,6 +118,7 @@ struct ReviewView: View {
                                 icon: "person.crop.circle.badge.exclamationmark",
                                 iconColor: AppTheme.accentEmerald
                             ) {
+                                HapticManager.shared.selection()
                                 cleanupManager.selectedContactIds.removeAll()
                             }
                         }
@@ -137,25 +140,36 @@ struct ReviewView: View {
                             .foregroundColor(AppTheme.subtleGray)
                     }
                     .padding()
-                    .background(AppTheme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .cleanCardStyle(cornerRadius: 16)
                     .padding(.horizontal)
                 } else {
                     Button(action: {
+                        HapticManager.shared.impact(.medium)
                         showConfirmDialog = true
                     }) {
-                        HStack {
+                        HStack(spacing: 8) {
                             Image(systemName: "trash.fill")
+                                .font(.headline)
                             Text(cleanupManager.totalSelectedCount == 1 ? "Clean 1 Item" : "Clean \(cleanupManager.totalSelectedCount) Items")
+                                .font(.headline)
                         }
                     }
                     .primaryButtonStyle(bg: cleanupManager.totalSelectedCount > 0 ? AppTheme.accentEmerald : Color.gray)
+                    .buttonStyle(BounceButtonStyle())
                     .disabled(cleanupManager.totalSelectedCount == 0)
-                    .padding(.horizontal, 20)
                 }
             }
-            .padding(.vertical, 16)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
             .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(AppTheme.cardBorder, lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
         }
         .background(AppTheme.primaryBackground)
         .navigationTitle("Review")
@@ -231,11 +245,13 @@ struct ReviewView: View {
                 cleanupManager.recordDeletedItems(assetIds: allFreedAssetIds, contactIds: freedContactIds)
                 cleanupManager.clearAllSelections()
                 
+                HapticManager.shared.notification(.success)
                 try? await Task.sleep(nanoseconds: 300_000_000)
                 isDeleting = false
                 navigateToSpaceFreed = true
                 
             } catch {
+                HapticManager.shared.notification(.error)
                 isDeleting = false
                 errorMessage = error.localizedDescription
                 showErrorAlert = true
@@ -279,9 +295,9 @@ struct ReviewCategoryRow: View {
                     .foregroundColor(Color(uiColor: .tertiaryLabel))
                     .font(.title3)
             }
+            .buttonStyle(BounceButtonStyle())
         }
         .padding(14)
-        .background(AppTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .cleanCardStyle(cornerRadius: 16)
     }
 }

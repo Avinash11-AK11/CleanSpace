@@ -20,7 +20,8 @@ struct CalendarCleanupView: View {
                         ForEach(CalendarFilterPeriod.allCases) { period in
                             let isSelected = selectedPeriod == period
                             Button {
-                                withAnimation(.easeInOut(duration: 0.2)) {
+                                HapticManager.shared.selection()
+                                withAnimation(.spring(response: 0.3)) {
                                     selectedPeriod = period
                                 }
                             } label: {
@@ -33,7 +34,7 @@ struct CalendarCleanupView: View {
                                     .foregroundColor(isSelected ? .white : .primary)
                                     .clipShape(Capsule())
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            .buttonStyle(BounceButtonStyle())
                         }
                     }
                     .padding(.horizontal, 16)
@@ -55,6 +56,7 @@ struct CalendarCleanupView: View {
                     
                     if !scanner.events.isEmpty {
                         Button(selectedEventIds.count == scanner.events.count ? "Deselect All" : "Select All") {
+                            HapticManager.shared.selection()
                             if selectedEventIds.count == scanner.events.count {
                                 selectedEventIds.removeAll()
                             } else {
@@ -66,7 +68,7 @@ struct CalendarCleanupView: View {
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.bottom, 6)
+                .padding(.bottom, 8)
             }
             .background(AppTheme.cardBackground)
             
@@ -102,6 +104,7 @@ struct CalendarCleanupView: View {
                         }
                     }
                     .primaryButtonStyle(bg: AppTheme.accentEmerald)
+                    .buttonStyle(BounceButtonStyle())
                     .padding(.horizontal, 40)
                 }
                 Spacer()
@@ -124,6 +127,7 @@ struct CalendarCleanupView: View {
                     ForEach(scanner.events) { event in
                         HStack(spacing: 14) {
                             Button {
+                                HapticManager.shared.impact(.light)
                                 if selectedEventIds.contains(event.id) {
                                     selectedEventIds.remove(event.id)
                                 } else {
@@ -160,46 +164,53 @@ struct CalendarCleanupView: View {
                 .listStyle(.plain)
             }
             
-            // Bottom Action Bar
+            // Bottom Action Bar (Floating Dock)
             if !selectedEventIds.isEmpty {
-                VStack(spacing: 0) {
-                    Divider()
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("\(selectedEventIds.count) Events Selected")
-                                .font(.subheadline.bold())
-                                .foregroundColor(.primary)
-                            Text("Ready to clean")
-                                .font(.caption)
-                                .foregroundColor(AppTheme.accentEmerald)
-                        }
-                        
-                        Spacer()
-                        
-                        Button {
-                            showingConfirmDialog = true
-                        } label: {
-                            HStack {
-                                if isDeleting {
-                                    ProgressView().tint(.white)
-                                } else {
-                                    Image(systemName: "trash.fill")
-                                    Text("Delete Events")
-                                }
-                            }
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(selectedEventIds.count) Events Selected")
                             .font(.subheadline.bold())
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(Color.red)
-                            .clipShape(Capsule())
-                        }
-                        .disabled(isDeleting)
+                            .foregroundColor(.primary)
+                        Text("Ready to clean")
+                            .font(.caption)
+                            .foregroundColor(AppTheme.accentEmerald)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 14)
-                    .background(AppTheme.cardBackground)
+                    
+                    Spacer()
+                    
+                    Button {
+                        HapticManager.shared.impact(.medium)
+                        showingConfirmDialog = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            if isDeleting {
+                                ProgressView().tint(.white)
+                            } else {
+                                Image(systemName: "trash.fill")
+                                Text("Delete Events")
+                            }
+                        }
+                        .font(.subheadline.bold())
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 10)
+                        .background(AppTheme.accentRed)
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(BounceButtonStyle())
+                    .disabled(isDeleting)
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 14)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(AppTheme.cardBorder, lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
             }
         }
         .background(AppTheme.primaryBackground)
@@ -232,6 +243,7 @@ struct CalendarCleanupView: View {
             deletedCount = count
             selectedEventIds.removeAll()
             isDeleting = false
+            HapticManager.shared.notification(.success)
             showSuccessToast = true
         }
     }

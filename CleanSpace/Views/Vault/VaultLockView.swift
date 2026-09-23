@@ -84,13 +84,21 @@ struct VaultLockView: View {
                 HStack(spacing: 28) {
                     if vaultManager.hasPINConfigured {
                         Button {
+                            HapticManager.shared.impact(.medium)
                             authenticateWithBiometrics()
                         } label: {
                             Image(systemName: "faceid")
                                 .font(.system(size: 28))
                                 .foregroundColor(AppTheme.accentPurple)
                                 .frame(width: 75, height: 75)
+                                .background(AppTheme.accentPurple.opacity(0.1))
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(AppTheme.accentPurple.opacity(0.2), lineWidth: 1)
+                                )
                         }
+                        .buttonStyle(BounceButtonStyle())
                     } else {
                         Spacer()
                             .frame(width: 75, height: 75)
@@ -107,7 +115,10 @@ struct VaultLockView: View {
                             .font(.system(size: 24))
                             .foregroundColor(AppTheme.subtleGray)
                             .frame(width: 75, height: 75)
+                            .background(AppTheme.cardBackground.opacity(0.5))
+                            .clipShape(Circle())
                     }
+                    .buttonStyle(BounceButtonStyle())
                 }
             }
             .padding(.bottom, 24)
@@ -132,6 +143,7 @@ struct VaultLockView: View {
     }
     
     private func appendDigit(_ digit: String) {
+        HapticManager.shared.impact(.light)
         showError = false
         if !vaultManager.hasPINConfigured {
             if !isConfirming {
@@ -166,6 +178,7 @@ struct VaultLockView: View {
     }
     
     private func deleteDigit() {
+        HapticManager.shared.selection()
         showError = false
         if !vaultManager.hasPINConfigured {
             if isConfirming {
@@ -188,10 +201,12 @@ struct VaultLockView: View {
     
     private func validateNewPin() {
         if enteredPin == confirmPin {
+            HapticManager.shared.notification(.success)
             vaultManager.setPIN(enteredPin)
             _ = vaultManager.verifyPIN(enteredPin)
             dismiss()
         } else {
+            HapticManager.shared.notification(.error)
             errorMessage = "PINs do not match. Try again."
             showError = true
             enteredPin = ""
@@ -202,8 +217,10 @@ struct VaultLockView: View {
     
     private func validateExistingPin() {
         if vaultManager.verifyPIN(enteredPin) {
+            HapticManager.shared.notification(.success)
             dismiss()
         } else {
+            HapticManager.shared.notification(.error)
             errorMessage = "Incorrect PIN"
             showError = true
             enteredPin = ""
@@ -214,6 +231,7 @@ struct VaultLockView: View {
         Task {
             let success = await vaultManager.authenticateWithBiometrics()
             if success {
+                HapticManager.shared.notification(.success)
                 dismiss()
             }
         }
@@ -232,7 +250,12 @@ private struct PinButton: View {
                 .frame(width: 75, height: 75)
                 .background(AppTheme.cardBackground)
                 .clipShape(Circle())
+                .overlay(
+                    Circle()
+                        .stroke(AppTheme.cardBorder, lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(BounceButtonStyle())
     }
 }

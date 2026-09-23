@@ -4,20 +4,57 @@ struct StorageGaugeView: View {
     let storageInfo: StorageInfo
     let cleanableBytes: Int64
     
+    private var healthTitle: String {
+        if storageInfo.usedPercentage > 0.90 {
+            return "Critical Space"
+        } else if storageInfo.usedPercentage > 0.75 {
+            return "Moderate Usage"
+        } else {
+            return "Optimal Space"
+        }
+    }
+    
+    private var healthColor: Color {
+        if storageInfo.usedPercentage > 0.90 {
+            return AppTheme.accentOrange
+        } else if storageInfo.usedPercentage > 0.75 {
+            return AppTheme.accentBlue
+        } else {
+            return AppTheme.accentEmerald
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 16) {
-            HStack {
+            // Header Row
+            HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("DEVICE STORAGE")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(AppTheme.subtleGray)
-                        .tracking(1.0)
+                    HStack(spacing: 6) {
+                        Text("STORAGE")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .foregroundColor(AppTheme.subtleGray)
+                            .tracking(1.2)
+                        
+                        Text(healthTitle)
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(healthColor)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(healthColor.opacity(0.12))
+                            .clipShape(Capsule())
+                    }
                     
-                    Text("\(storageInfo.formattedUsed) used")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(.primary)
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(storageInfo.formattedUsed)
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                        Text("used of \(storageInfo.formattedTotal)")
+                            .font(.subheadline)
+                            .foregroundColor(AppTheme.subtleGray)
+                    }
                 }
+                
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 4) {
@@ -25,12 +62,12 @@ struct StorageGaugeView: View {
                         .font(.caption)
                         .foregroundColor(AppTheme.subtleGray)
                     Text(storageInfo.formattedFree)
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundColor(AppTheme.accentEmerald)
                 }
             }
             
-            // Storage Bar
+            // Storage Bar Track
             GeometryReader { geometry in
                 let totalWidth = geometry.size.width
                 let usedWidth = totalWidth * CGFloat(min(1.0, max(0.0, storageInfo.usedPercentage)))
@@ -43,7 +80,7 @@ struct StorageGaugeView: View {
                         .fill(Color(uiColor: .systemFill))
                         .frame(height: 14)
                     
-                    // Used bar
+                    // Used bar gradient
                     Capsule()
                         .fill(
                             LinearGradient(
@@ -56,20 +93,24 @@ struct StorageGaugeView: View {
                     
                     // Cleanable highlight overlay
                     if cleanableBytes > 0 {
-                        Capsule()
-                            .fill(AppTheme.accentEmerald)
-                            .frame(width: max(6, cleanableWidth), height: 14)
+                        HStack(spacing: 0) {
+                            Spacer().frame(width: max(0, usedWidth - cleanableWidth))
+                            Capsule()
+                                .fill(AppTheme.accentEmerald)
+                                .frame(width: max(10, cleanableWidth), height: 14)
+                        }
                     }
                 }
             }
             .frame(height: 14)
             
+            // Legend
             HStack {
                 HStack(spacing: 6) {
                     Circle()
                         .fill(AppTheme.accentBlue)
                         .frame(width: 8, height: 8)
-                    Text("System & Apps: \(Int(storageInfo.usedPercentage * 100))%")
+                    Text("System & Apps (\(Int(storageInfo.usedPercentage * 100))%)")
                         .font(.caption2)
                         .foregroundColor(AppTheme.subtleGray)
                 }
@@ -83,15 +124,13 @@ struct StorageGaugeView: View {
                             .frame(width: 8, height: 8)
                         Text("Cleanable: \(ByteCountFormatter.string(fromByteCount: cleanableBytes, countStyle: .file))")
                             .font(.caption2)
-                            .fontWeight(.medium)
+                            .fontWeight(.bold)
                             .foregroundColor(AppTheme.accentEmerald)
                     }
                 }
             }
         }
         .padding(20)
-        .background(AppTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+        .cleanCardStyle(cornerRadius: 22)
     }
 }

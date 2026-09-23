@@ -64,13 +64,15 @@ struct SwipeCardView: View {
                                 Image(systemName: "checkmark.circle.fill")
                                 Text("KEEP")
                             }
-                            .font(.system(size: 24, weight: .heavy, design: .rounded))
+                            .font(.system(size: 22, weight: .heavy, design: .rounded))
                             .foregroundColor(AppTheme.accentEmerald)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
+                            .background(.ultraThinMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(AppTheme.accentEmerald, lineWidth: 3)
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(AppTheme.accentEmerald, lineWidth: 2.5)
                             )
                             .rotationEffect(.degrees(-15))
                             .opacity(min(1.0, Double(offset.width) / 80.0))
@@ -87,13 +89,15 @@ struct SwipeCardView: View {
                                 Image(systemName: "trash.fill")
                                 Text("DELETE")
                             }
-                            .font(.system(size: 24, weight: .heavy, design: .rounded))
+                            .font(.system(size: 22, weight: .heavy, design: .rounded))
                             .foregroundColor(AppTheme.accentRed)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
+                            .background(.ultraThinMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(AppTheme.accentRed, lineWidth: 3)
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(AppTheme.accentRed, lineWidth: 2.5)
                             )
                             .rotationEffect(.degrees(15))
                             .opacity(min(1.0, Double(-offset.width) / 80.0))
@@ -105,9 +109,13 @@ struct SwipeCardView: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(AppTheme.cardBorder, lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.18), radius: 16, x: 0, y: 8)
             .offset(x: offset.width, y: offset.height * 0.2)
-            .rotationEffect(.degrees(Double(offset.width / 20)))
+            .rotationEffect(.degrees(Double(offset.width / 22)))
             .gesture(
                 DragGesture()
                     .onChanged { gesture in
@@ -117,6 +125,7 @@ struct SwipeCardView: View {
                         let threshold: CGFloat = 100
                         if gesture.translation.width > threshold {
                             // Swiped Right -> Keep
+                            HapticManager.shared.impact(.light)
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                                 offset.width = 600
                             }
@@ -125,6 +134,7 @@ struct SwipeCardView: View {
                             }
                         } else if gesture.translation.width < -threshold {
                             // Swiped Left -> Delete
+                            HapticManager.shared.impact(.medium)
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                                 offset.width = -600
                             }

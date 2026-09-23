@@ -60,7 +60,9 @@ final class DashboardViewModel: ObservableObject {
             scanProgress = 0.1
             
             // 1. Screenshots
-            let shots = ScreenshotScanner.shared.fetchScreenshots()
+            let shots = await Task.detached(priority: .userInitiated) {
+                ScreenshotScanner.shared.fetchScreenshots()
+            }.value
             self.screenshots = shots
             self.cleanableScreenshotBytes = shots.reduce(0) { $0 + $1.fileSize }
             for shot in shots {
@@ -70,9 +72,12 @@ final class DashboardViewModel: ObservableObject {
             
             // 2. Photos & Similar photos
             currentTask = "Analyzing photos for similarities..."
-            let allPhotoAssets = PhotoScanner.shared.fetchAllPhotos()
+            let (allPhotoAssets, photoItems) = await Task.detached(priority: .userInitiated) {
+                let assets = PhotoScanner.shared.fetchAllPhotos()
+                let items = assets.map { PhotoItem(asset: $0, fileSize: PhotoScanner.shared.estimateAssetSize(asset: $0)) }
+                return (assets, items)
+            }.value
             print("CleanSpace: Fetched \(allPhotoAssets.count) total photo assets")
-            let photoItems = allPhotoAssets.map { PhotoItem(asset: $0, fileSize: PhotoScanner.shared.estimateAssetSize(asset: $0)) }
             self.allPhotos = photoItems
             for p in photoItems {
                 CleanupManager.shared.allPhotosMap[p.id] = p
@@ -101,11 +106,14 @@ final class DashboardViewModel: ObservableObject {
             // 4. Large & Duplicate Videos
             currentTask = "Scanning for large and duplicate videos..."
             scanProgress = 0.7
-            let videos = VideoScanner.shared.fetchLargeVideos()
+            let (videos, dupVideos) = await Task.detached(priority: .userInitiated) {
+                let vids = VideoScanner.shared.fetchLargeVideos()
+                let dups = VideoScanner.shared.findDuplicateVideoGroups(videos: vids)
+                return (vids, dups)
+            }.value
             self.largeVideos = videos
             self.cleanableVideoBytes = videos.reduce(0) { $0 + $1.fileSize }
             
-            let dupVideos = VideoScanner.shared.findDuplicateVideoGroups(videos: videos)
             self.duplicateVideoGroups = dupVideos
             self.cleanableDuplicateVideoBytes = dupVideos.reduce(0) { $0 + $1.cleanableSize }
             

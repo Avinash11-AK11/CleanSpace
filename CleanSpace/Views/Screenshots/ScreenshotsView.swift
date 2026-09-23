@@ -44,6 +44,7 @@ struct ScreenshotsView: View {
                             Spacer()
                             
                             Button(allSelected ? "Deselect All" : "Select All") {
+                                HapticManager.shared.selection()
                                 withAnimation {
                                     if allSelected {
                                         cleanupManager.deselectAllScreenshots()
@@ -63,6 +64,7 @@ struct ScreenshotsView: View {
                                 let isSelected = cleanupManager.selectedScreenshotIds.contains(item.id)
                                 
                                 Button {
+                                    HapticManager.shared.impact(.light)
                                     withAnimation(.spring(response: 0.3)) {
                                         cleanupManager.toggleScreenshot(item)
                                     }
@@ -71,10 +73,10 @@ struct ScreenshotsView: View {
                                         PHAssetThumbnailView(asset: item.asset)
                                             .aspectRatio(1, contentMode: .fill)
                                             .clipped()
-                                            .cornerRadius(12)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                                             .overlay(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(isSelected ? AppTheme.accentEmerald : Color.clear, lineWidth: 3)
+                                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                    .stroke(isSelected ? AppTheme.accentEmerald : AppTheme.cardBorder, lineWidth: isSelected ? 3 : 1)
                                             )
                                         
                                         // Selection indicator
@@ -117,35 +119,44 @@ struct ScreenshotsView: View {
                 .padding(.top, 8)
             }
             
-            // Bottom review prompt if items selected
+            // Bottom floating glass dock if items selected
             if cleanupManager.totalSelectedCount > 0 {
-                VStack(spacing: 0) {
-                    Divider()
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(cleanupManager.formattedTotalSelectedCount)
-                                .font(.subheadline)
-                                .fontWeight(.bold)
-                            Text("Estimated: \(cleanupManager.formattedEstimatedBytes)")
-                                .font(.caption)
-                                .foregroundColor(AppTheme.accentEmerald)
-                        }
-                        Spacer()
-                        NavigationLink(destination: ReviewView()) {
-                            Text("Review Cleanup")
-                                .font(.subheadline)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                                .background(AppTheme.accentEmerald)
-                                .clipShape(Capsule())
-                        }
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(cleanupManager.formattedTotalSelectedCount)
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                        Text("Estimated: \(cleanupManager.formattedEstimatedBytes)")
+                            .font(.caption)
+                            .foregroundColor(AppTheme.accentEmerald)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 14)
-                    .background(.ultraThinMaterial)
+                    Spacer()
+                    NavigationLink(destination: ReviewView()) {
+                        HStack(spacing: 6) {
+                            Text("Review Cleanup")
+                            Image(systemName: "arrow.right")
+                        }
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 10)
+                        .background(AppTheme.accentEmerald)
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(BounceButtonStyle())
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 14)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(AppTheme.cardBorder, lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
             }
         }
         .background(AppTheme.primaryBackground)

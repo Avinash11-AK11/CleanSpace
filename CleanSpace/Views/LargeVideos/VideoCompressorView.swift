@@ -45,11 +45,13 @@ struct VideoCompressorView: View {
                     
                     Spacer().frame(height: 30)
                 }
-                .padding(.top, 8)
+                .padding(.top, 16)
             }
             .background(AppTheme.primaryBackground)
             .navigationTitle("Compress Video")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
             .onDisappear {
                 if isCompleted {
                     notifyCompletionOnce()
@@ -109,8 +111,7 @@ struct VideoCompressorView: View {
             Spacer()
         }
         .padding(16)
-        .background(AppTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .cleanCardStyle(cornerRadius: 18)
         .padding(.horizontal)
     }
     
@@ -129,7 +130,8 @@ struct VideoCompressorView: View {
                     let pct = max(15, Int((1.0 - (Double(estSize) / Double(max(1, video.fileSize)))) * 100))
                     
                     Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        HapticManager.shared.selection()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
                             selectedPreset = preset
                         }
                     } label: {
@@ -142,7 +144,7 @@ struct VideoCompressorView: View {
                                 
                                 Text("Est. ~\(ByteCountFormatter.string(fromByteCount: estSize, countStyle: .file)) • Save ~\(pct)%")
                                     .font(.caption)
-                                    .foregroundColor(AppTheme.accentEmerald)
+                                    .foregroundColor(isSelected ? AppTheme.accentEmerald : AppTheme.subtleGray)
                             }
                             
                             Spacer()
@@ -152,14 +154,14 @@ struct VideoCompressorView: View {
                                 .foregroundColor(isSelected ? AppTheme.accentEmerald : AppTheme.subtleGray)
                         }
                         .padding(14)
-                        .background(isSelected ? AppTheme.accentEmerald.opacity(0.08) : AppTheme.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .background(isSelected ? AppTheme.accentEmerald.opacity(0.10) : AppTheme.cardBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(isSelected ? AppTheme.accentEmerald : Color.clear, lineWidth: 1.5)
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(isSelected ? AppTheme.accentEmerald : AppTheme.cardBorder, lineWidth: isSelected ? 1.5 : 1)
                         )
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(BounceButtonStyle())
                 }
             }
         }
@@ -207,8 +209,7 @@ struct VideoCompressorView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(18)
-        .background(AppTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .cleanCardStyle(cornerRadius: 18)
         .padding(.horizontal)
     }
     
@@ -217,7 +218,7 @@ struct VideoCompressorView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Delete Original Video")
                     .font(.subheadline)
-                    .fontWeight(.medium)
+                    .fontWeight(.semibold)
                     .foregroundColor(.primary)
                 Text(deleteOriginal ? "Saves space by moving original to Recently Deleted" : "Keeps both original and newly compressed copy")
                     .font(.caption)
@@ -226,8 +227,7 @@ struct VideoCompressorView: View {
         }
         .tint(AppTheme.accentEmerald)
         .padding(14)
-        .background(AppTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .cleanCardStyle(cornerRadius: 14)
         .padding(.horizontal)
     }
     
@@ -249,17 +249,19 @@ struct VideoCompressorView: View {
                     }
                 }
                 .padding()
-                .background(AppTheme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .cleanCardStyle(cornerRadius: 16)
                 .padding(.horizontal)
             } else {
                 Button(action: startCompression) {
-                    HStack {
+                    HStack(spacing: 8) {
                         Image(systemName: "arrow.down.right.and.arrow.up.left")
+                            .font(.headline)
                         Text("Compress & Free Storage")
+                            .font(.headline)
                     }
                 }
                 .primaryButtonStyle(bg: AppTheme.accentEmerald)
+                .buttonStyle(BounceButtonStyle())
                 .padding(.horizontal)
             }
         }
@@ -298,15 +300,16 @@ struct VideoCompressorView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(AppTheme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .cleanCardStyle(cornerRadius: 16)
             }
             
             Button("Done") {
+                HapticManager.shared.impact(.light)
                 notifyCompletionOnce()
                 dismiss()
             }
             .primaryButtonStyle(bg: AppTheme.accentEmerald)
+            .buttonStyle(BounceButtonStyle())
             .padding(.top, 12)
         }
         .padding(.horizontal)
@@ -319,6 +322,7 @@ struct VideoCompressorView: View {
     }
     
     private func startCompression() {
+        HapticManager.shared.impact(.medium)
         Task {
             isCompressing = true
             progress = 0.05
@@ -352,9 +356,11 @@ struct VideoCompressorView: View {
                     CleanupManager.shared.deletedAssetIds.insert(video.id)
                 }
                 
+                HapticManager.shared.notification(.success)
                 isCompressing = false
                 isCompleted = true
             } catch {
+                HapticManager.shared.notification(.error)
                 isCompressing = false
                 errorMessage = error.localizedDescription
                 showError = true

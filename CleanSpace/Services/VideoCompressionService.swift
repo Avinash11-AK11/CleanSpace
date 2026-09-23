@@ -12,18 +12,35 @@ enum CompressionPreset: String, CaseIterable, Identifiable, Sendable {
     var preferredPresetNames: [String] {
         switch self {
         case .high:
+            #if targetEnvironment(simulator)
+            return [
+                AVAssetExportPreset1920x1080,
+                AVAssetExportPreset1280x720,
+                AVAssetExportPresetMediumQuality
+            ]
+            #else
             return [
                 AVAssetExportPresetHEVC1920x1080,
                 AVAssetExportPreset1920x1080,
                 AVAssetExportPreset1280x720,
                 AVAssetExportPresetMediumQuality
             ]
+            #endif
         case .medium:
+            #if targetEnvironment(simulator)
             return [
                 AVAssetExportPreset1280x720,
                 AVAssetExportPresetMediumQuality,
                 AVAssetExportPreset960x540
             ]
+            #else
+            return [
+                AVAssetExportPresetHEVC1280x720,
+                AVAssetExportPreset1280x720,
+                AVAssetExportPresetMediumQuality,
+                AVAssetExportPreset960x540
+            ]
+            #endif
         case .low:
             return [
                 AVAssetExportPreset960x540,
@@ -36,9 +53,9 @@ enum CompressionPreset: String, CaseIterable, Identifiable, Sendable {
     var reductionFactor: Double {
         switch self {
         case .high:
-            return 0.65 // ~65% savings with 1080p HEVC
+            return 0.65 // ~65% savings with 1080p
         case .medium:
-            return 0.80 // ~80% savings with 720p HEVC
+            return 0.80 // ~80% savings with 720p
         case .low:
             return 0.90 // ~90% savings with 540p
         }
@@ -60,10 +77,6 @@ final class VideoCompressionService: @unchecked Sendable {
     
     /// Estimates compressed file size for a given preset and video duration
     func estimateCompressedSize(originalBytes: Int64, duration: Double, preset: CompressionPreset) -> Int64 {
-        // Target bitrates for presets
-        // High (1080p HEVC): ~4.5 Mbps ≈ 560 KB/s
-        // Medium (720p HEVC): ~2.2 Mbps ≈ 275 KB/s
-        // Low (540p): ~1.0 Mbps ≈ 125 KB/s
         let ratePerSecond: Double
         switch preset {
         case .high: ratePerSecond = 560_000
@@ -75,7 +88,6 @@ final class VideoCompressionService: @unchecked Sendable {
         let factorBased = Int64(Double(originalBytes) * (1.0 - preset.reductionFactor))
         let target = min(durationBased, factorBased)
         
-        // Guarantee estimated size is always smaller than original (at least 20% smaller)
         let maxAllowed = max(400_000, Int64(Double(originalBytes) * 0.78))
         return max(350_000, min(target, maxAllowed))
     }
@@ -87,16 +99,31 @@ final class VideoCompressionService: @unchecked Sendable {
         progressHandler: (@Sendable (Double) -> Void)? = nil
     ) async throws -> URL {
         let avAsset: AVAsset = try await withCheckedThrowingContinuation { continuation in
+            var hasResumed = false
+            let lock = NSLock()
+            
             let options = PHVideoRequestOptions()
             options.isNetworkAccessAllowed = true
             options.deliveryMode = .highQualityFormat
             
             PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, info in
+                lock.lock()
+                defer { lock.unlock() }
+                
+                guard !hasResumed else { return }
+                
+                if let isDegraded = info?[PHImageResultIsDegradedKey] as? Bool, isDegraded {
+                    return
+                }
+                
                 if let error = info?[PHImageErrorKey] as? Error {
+                    hasResumed = true
                     continuation.resume(throwing: error)
                 } else if let avAsset = avAsset {
+                    hasResumed = true
                     continuation.resume(returning: avAsset)
                 } else {
+                    hasResumed = true
                     continuation.resume(throwing: NSError(domain: "CleanSpaceVideoCompression", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to load video asset"]))
                 }
             }
@@ -104,23 +131,34 @@ final class VideoCompressionService: @unchecked Sendable {
         
         let compatiblePresets = AVAssetExportSession.exportPresets(compatibleWith: avAsset)
         
-        // Find best compatible preset from preferred list
-        var chosenPreset = AVAssetExportPresetMediumQuality
+        // Try preferred presets in order with automatic fallback
+        var lastError: Error?
+        var outputURL: URL?
+        
         for candidate in preset.preferredPresetNames {
-            if compatiblePresets.contains(candidate) {
-                chosenPreset = candidate
+            guard compatiblePresets.contains(candidate) else { continue }
+            
+            do {
+                print("CleanSpace: Exporting video with preset: \(candidate)")
+                let url = try await runExportSession(avAsset: avAsset, presetName: candidate, progressHandler: progressHandler)
+                outputURL = url
                 break
+            } catch {
+                print("CleanSpace: Export with \(candidate) failed (\(error.localizedDescription)). Trying next preset...")
+                lastError = error
             }
         }
         
-        var outputURL = try await runExportSession(avAsset: avAsset, presetName: chosenPreset, progressHandler: progressHandler)
+        guard let finalURL = outputURL else {
+            throw lastError ?? NSError(domain: "CleanSpaceVideoCompression", code: -2, userInfo: [NSLocalizedDescriptionKey: "No compatible export preset could complete compression."])
+        }
         
         // Check output size vs original size
         let resources = PHAssetResource.assetResources(for: asset)
         let originalBytes = (resources.first?.value(forKey: "fileSize") as? Int64) ?? 0
-        let exportedBytes = (try? FileManager.default.attributesOfItem(atPath: outputURL.path)[.size] as? Int64) ?? 0
+        let exportedBytes = (try? FileManager.default.attributesOfItem(atPath: finalURL.path)[.size] as? Int64) ?? 0
         
-        // If output size is >= original size, re-export using a more aggressive compression preset to guarantee savings!
+        // If output size is >= original size, re-export using a smaller preset to guarantee savings!
         if originalBytes > 0 && exportedBytes >= originalBytes {
             let fallbackPresets = [
                 AVAssetExportPreset1280x720,
@@ -128,15 +166,16 @@ final class VideoCompressionService: @unchecked Sendable {
                 AVAssetExportPreset960x540
             ]
             for fallback in fallbackPresets {
-                if compatiblePresets.contains(fallback) && fallback != chosenPreset {
-                    try? FileManager.default.removeItem(at: outputURL)
-                    outputURL = try await runExportSession(avAsset: avAsset, presetName: fallback, progressHandler: nil)
-                    break
+                if compatiblePresets.contains(fallback) {
+                    try? FileManager.default.removeItem(at: finalURL)
+                    if let smallerURL = try? await runExportSession(avAsset: avAsset, presetName: fallback, progressHandler: nil) {
+                        return smallerURL
+                    }
                 }
             }
         }
         
-        return outputURL
+        return finalURL
     }
     
     private func runExportSession(
@@ -144,47 +183,88 @@ final class VideoCompressionService: @unchecked Sendable {
         presetName: String,
         progressHandler: (@Sendable (Double) -> Void)?
     ) async throws -> URL {
+        guard let exportSession = AVAssetExportSession(asset: avAsset, presetName: presetName) else {
+            throw NSError(domain: "CleanSpaceVideoCompression", code: -3, userInfo: [NSLocalizedDescriptionKey: "Preset not supported: \(presetName)"])
+        }
+        
+        let supportedTypes = exportSession.supportedFileTypes
+        let fileType: AVFileType
+        if supportedTypes.contains(.mp4) {
+            fileType = .mp4
+        } else if supportedTypes.contains(.mov) {
+            fileType = .mov
+        } else {
+            fileType = supportedTypes.first ?? .mp4
+        }
+        
+        let ext = (fileType == .mov) ? "mov" : "mp4"
         let outputURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("mp4")
+            .appendingPathComponent("compressed_\(UUID().uuidString)")
+            .appendingPathExtension(ext)
         
         try? FileManager.default.removeItem(at: outputURL)
         
-        guard let exportSession = AVAssetExportSession(asset: avAsset, presetName: presetName) else {
-            throw NSError(domain: "CleanSpaceVideoCompression", code: -2, userInfo: [NSLocalizedDescriptionKey: "Preset not supported for this video format"])
-        }
-        
         exportSession.outputURL = outputURL
-        exportSession.outputFileType = .mp4
+        exportSession.outputFileType = fileType
+        #if !targetEnvironment(simulator)
         exportSession.shouldOptimizeForNetworkUse = true
+        #endif
         
-        let progressTask = Task {
-            while !Task.isCancelled {
-                let currentStatus = exportSession.status
-                if currentStatus == .exporting || currentStatus == .waiting {
-                    let progress = Double(exportSession.progress)
-                    progressHandler?(max(0.05, progress))
-                } else {
-                    break
+        return try await withCheckedThrowingContinuation { continuation in
+            let lock = NSLock()
+            var hasCompleted = false
+            
+            @Sendable func finish(with result: Result<URL, Error>) {
+                lock.lock()
+                defer { lock.unlock() }
+                guard !hasCompleted else { return }
+                hasCompleted = true
+                switch result {
+                case .success(let url):
+                    continuation.resume(returning: url)
+                case .failure(let err):
+                    continuation.resume(throwing: err)
                 }
-                try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
             }
-        }
-        
-        await exportSession.export()
-        progressTask.cancel()
-        
-        switch exportSession.status {
-        case .completed:
-            progressHandler?(1.0)
-            return outputURL
-        case .failed:
-            let err = exportSession.error ?? NSError(domain: "CleanSpaceVideoCompression", code: -3, userInfo: [NSLocalizedDescriptionKey: "Video compression export failed"])
-            throw err
-        case .cancelled:
-            throw NSError(domain: "CleanSpaceVideoCompression", code: -4, userInfo: [NSLocalizedDescriptionKey: "Export was cancelled"])
-        default:
-            throw NSError(domain: "CleanSpaceVideoCompression", code: -5, userInfo: [NSLocalizedDescriptionKey: "Unknown export status: \(exportSession.status.rawValue)"])
+            
+            // Watchdog & Progress polling task
+            let progressTask = Task {
+                while !Task.isCancelled {
+                    try? await Task.sleep(nanoseconds: 120_000_000) // 120ms
+                    
+                    let s = exportSession.status
+                    let p = Double(exportSession.progress)
+                    
+                    if s == .exporting || s == .waiting {
+                        progressHandler?(max(0.08, min(0.98, p)))
+                    } else if s == .completed {
+                        progressHandler?(1.0)
+                        finish(with: .success(outputURL))
+                        break
+                    } else if s == .failed {
+                        let err = exportSession.error ?? NSError(domain: "CleanSpaceVideoCompression", code: -4, userInfo: [NSLocalizedDescriptionKey: "Video export session failed."])
+                        finish(with: .failure(err))
+                        break
+                    } else if s == .cancelled {
+                        finish(with: .failure(NSError(domain: "CleanSpaceVideoCompression", code: -5, userInfo: [NSLocalizedDescriptionKey: "Video export was cancelled."])))
+                        break
+                    }
+                }
+            }
+            
+            exportSession.exportAsynchronously {
+                progressTask.cancel()
+                let s = exportSession.status
+                if s == .completed {
+                    progressHandler?(1.0)
+                    finish(with: .success(outputURL))
+                } else if s == .failed {
+                    let err = exportSession.error ?? NSError(domain: "CleanSpaceVideoCompression", code: -4, userInfo: [NSLocalizedDescriptionKey: "Video export session failed."])
+                    finish(with: .failure(err))
+                } else if s == .cancelled {
+                    finish(with: .failure(NSError(domain: "CleanSpaceVideoCompression", code: -5, userInfo: [NSLocalizedDescriptionKey: "Video export was cancelled."])))
+                }
+            }
         }
     }
     
