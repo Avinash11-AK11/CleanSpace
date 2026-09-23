@@ -36,7 +36,7 @@ final class BlurDetectionService: @unchecked Sendable {
             progressHandler?(progress, "Scanning photo \(index + 1) of \(total)...")
             
             if let cgImage = await requestAnalysisImage(for: asset) {
-                let (isBlurry, score) = analyzeBlur(cgImage: cgImage)
+                let (isBlurry, score) = analyzeBlur(cgImage: cgImage, assetId: asset.localIdentifier)
                 
                 if isBlurry {
                     let size = PhotoScanner.shared.estimateAssetSize(asset: asset)
@@ -51,33 +51,92 @@ final class BlurDetectionService: @unchecked Sendable {
         return blurryItems.sorted { $0.sharpnessScore < $1.sharpnessScore }
     }
     
-    /// Analyzes image sharpness using Vision face capture quality and multi-block Laplacian variance
-    private func analyzeBlur(cgImage: CGImage) -> (isBlurry: Bool, score: Double) {
+    /// Analyzes image sharpness using Vision face capture quality, face crop analysis, and multi-block Laplacian variance
+    private func analyzeBlur(cgImage: CGImage, assetId: String = "") -> (isBlurry: Bool, score: Double) {
+        var faceQualityScore: Double? = nil
+        var faceCropSharpness: Double? = nil
+        
         // 1. Pass 1: Vision Face Focus & Motion Blur Quality
-        let faceRequest = VNDetectFaceCaptureQualityRequest()
+        let faceQualityReq = VNDetectFaceCaptureQualityRequest()
+        let faceRectReq = VNDetectFaceRectanglesRequest()
         let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
         
-        if (try? handler.perform([faceRequest])) != nil,
-           let faces = faceRequest.results, !faces.isEmpty {
-            let qualities = faces.compactMap { $0.faceCaptureQuality }
-            if let minQuality = qualities.min() {
-                // Apple's faceCaptureQuality scores holistic quality factoring in focus, motion blur, and illumination (0.0 to 1.0)
-                // Faces below 0.45 exhibit noticeable motion blur or soft focus
-                if minQuality < 0.45 {
-                    return (true, Double(minQuality))
+        if (try? handler.perform([faceQualityReq, faceRectReq])) != nil {
+            if let faces = faceQualityReq.results, !faces.isEmpty {
+                let qualities = faces.compactMap { $0.faceCaptureQuality }
+                if let minQuality = qualities.min() {
+                    faceQualityScore = Double(minQuality)
+                }
+            }
+            
+            // If faces are found, crop the primary face region and compute local facial sharpness
+            if let faceRects = faceRectReq.results, let primaryFace = faceRects.max(by: { $0.boundingBox.width * $0.boundingBox.height < $1.boundingBox.width * $1.boundingBox.height }) {
+                let imgW = CGFloat(cgImage.width)
+                let imgH = CGFloat(cgImage.height)
+                let box = primaryFace.boundingBox
+                
+                // Convert Vision coordinates (bottom-left origin) to CGImage coordinates (top-left origin)
+                let x = max(0, box.origin.x * imgW)
+                let y = max(0, (1.0 - box.origin.y - box.size.height) * imgH)
+                let w = min(imgW - x, box.size.width * imgW)
+                let h = min(imgH - y, box.size.height * imgH)
+                
+                if w >= 32 && h >= 32, let faceCrop = cgImage.cropping(to: CGRect(x: x, y: y, width: w, height: h)) {
+                    let faceMetrics = computeGridLaplacianMetrics(cgImage: faceCrop)
+                    faceCropSharpness = faceMetrics.p75Variance
                 }
             }
         }
         
         // 2. Pass 2: Local Grid-Based Laplacian & High-Frequency Edge Analysis
-        let (gridSharpness, edgeRatio) = computeGridLaplacianMetrics(cgImage: cgImage)
+        let metrics = computeGridLaplacianMetrics(cgImage: cgImage)
+        let gridSharpness = metrics.p75Variance
+        let edgeRatio = metrics.edgeRatio
+        let medianSharpness = metrics.p50Variance
+        let centerSharpness = metrics.centerVariance
+        let compositeSharpness = gridSharpness * edgeRatio
         
-        // In sharp photos, the in-focus subject regions produce grid sharpness > 250 and edgeRatio > 0.035
-        // In blurry photos (shaky camera, defocus), the 75th percentile block sharpness drops below 120
-        let isBlurryByGrid = gridSharpness < 120.0 || (gridSharpness < 155.0 && edgeRatio < 0.028)
-        let normalizedScore = min(1.0, max(0.05, gridSharpness / 350.0))
+        // Evaluate Blurry criteria:
+        var isBlurry = false
+        var reason = ""
         
-        return (isBlurryByGrid, normalizedScore)
+        // Face Quality criteria:
+        if let fq = faceQualityScore, fq < 0.58 {
+            isBlurry = true
+            reason = "faceQuality (\(String(format: "%.2f", fq)) < 0.58)"
+        } else if let fcs = faceCropSharpness, fcs < 185.0 {
+            isBlurry = true
+            reason = "faceCropSharpness (\(String(format: "%.1f", fcs)) < 185.0)"
+        }
+        
+        // Grid & Edge Sharpness criteria:
+        if !isBlurry {
+            if compositeSharpness < 14.8 {
+                isBlurry = true
+                reason = "compositeSharpness (\(String(format: "%.2f", compositeSharpness)) < 14.8)"
+            } else if gridSharpness < 180.0 {
+                isBlurry = true
+                reason = "gridSharpness p75 (\(String(format: "%.1f", gridSharpness)) < 180.0)"
+            } else if gridSharpness < 275.0 && edgeRatio < 0.050 {
+                isBlurry = true
+                reason = "p75 < 275 & edgeRatio < 0.050 (p75=\(String(format: "%.1f", gridSharpness)), ratio=\(String(format: "%.4f", edgeRatio)))"
+            } else if centerSharpness < 150.0 && medianSharpness < 95.0 {
+                isBlurry = true
+                reason = "center < 150 & median < 95 (center=\(String(format: "%.1f", centerSharpness)), med=\(String(format: "%.1f", medianSharpness)))"
+            } else if edgeRatio < 0.022 {
+                isBlurry = true
+                reason = "edgeRatio (\(String(format: "%.4f", edgeRatio)) < 0.022)"
+            }
+        }
+        
+        let normalizedScore: Double
+        if let fq = faceQualityScore, isBlurry {
+            normalizedScore = min(0.48, max(0.05, fq))
+        } else {
+            normalizedScore = min(1.0, max(0.05, compositeSharpness / 30.0))
+        }
+        
+        return (isBlurry, normalizedScore)
     }
     
     /// Requests a high-resolution 512x512 image for accurate edge and facial focus analysis
@@ -138,8 +197,15 @@ final class BlurDetectionService: @unchecked Sendable {
         return rendered.cgImage
     }
     
+    private struct GridMetrics {
+        let p75Variance: Double
+        let p50Variance: Double
+        let centerVariance: Double
+        let edgeRatio: Double
+    }
+    
     /// Evaluates sharpness across an 8x8 grid of blocks to prevent isolated lights from skewing overall blur score
-    private func computeGridLaplacianMetrics(cgImage: CGImage) -> (p75Variance: Double, edgeRatio: Double) {
+    private func computeGridLaplacianMetrics(cgImage: CGImage) -> GridMetrics {
         let width = 512
         let height = 512
         
@@ -155,7 +221,7 @@ final class BlurDetectionService: @unchecked Sendable {
             space: colorSpace,
             bitmapInfo: CGImageAlphaInfo.none.rawValue
         ) else {
-            return (250.0, 0.05)
+            return GridMetrics(p75Variance: 250.0, p50Variance: 150.0, centerVariance: 200.0, edgeRatio: 0.05)
         }
         
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
@@ -167,6 +233,8 @@ final class BlurDetectionService: @unchecked Sendable {
         
         var blockVariances: [Double] = []
         blockVariances.reserveCapacity(gridSize * gridSize)
+        var centerVariances: [Double] = []
+        centerVariances.reserveCapacity(16)
         
         var totalEdgeCount = 0
         let totalValidPixels = (width - 2) * (height - 2)
@@ -211,19 +279,30 @@ final class BlurDetectionService: @unchecked Sendable {
                         let diff = val - mean
                         varSum += diff * diff
                     }
-                    blockVariances.append(varSum / Double(laplacians.count))
+                    let blockVar = varSum / Double(laplacians.count)
+                    blockVariances.append(blockVar)
+                    
+                    // Central 4x4 region (rows 2..5, cols 2..5)
+                    if bx >= 2 && bx <= 5 && by >= 2 && by <= 5 {
+                        centerVariances.append(blockVar)
+                    }
                 }
             }
         }
         
-        guard !blockVariances.isEmpty else { return (250.0, 0.05) }
+        guard !blockVariances.isEmpty else {
+            return GridMetrics(p75Variance: 250.0, p50Variance: 150.0, centerVariance: 200.0, edgeRatio: 0.05)
+        }
         
         blockVariances.sort()
-        // 75th percentile represents the sharpest subject regions (avoiding flat sky at bottom & point lights at top 5%)
         let p75Index = min(blockVariances.count - 1, Int(Double(blockVariances.count) * 0.75))
+        let p50Index = min(blockVariances.count - 1, Int(Double(blockVariances.count) * 0.50))
         let p75 = blockVariances[p75Index]
+        let p50 = blockVariances[p50Index]
+        
+        let centerAvg = centerVariances.isEmpty ? p50 : (centerVariances.reduce(0, +) / Double(centerVariances.count))
         let edgeRatio = Double(totalEdgeCount) / Double(max(1, totalValidPixels))
         
-        return (p75, edgeRatio)
+        return GridMetrics(p75Variance: p75, p50Variance: p50, centerVariance: centerAvg, edgeRatio: edgeRatio)
     }
 }
