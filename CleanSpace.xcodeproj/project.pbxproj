@@ -42,6 +42,7 @@
 		A99318576728DC3D4240E7D8 /* CleanupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C3FB34C86161B35B4294BD /* CleanupManager.swift */; };
 		AB996EA4D3909720139E6FE8 /* ScreenshotsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F79931CE4096900C99C5C43 /* ScreenshotsView.swift */; };
 		BC61007C4AEF2F98DBD53740 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD5C28D84132B2F9B78B7CC9 /* AppTheme.swift */; };
+		C3535FFC392DFFB5D451DCFF /* StorageWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7A8D9F2288840724D000B4 /* StorageWidgetView.swift */; };
 		C473E43638429907AE1D3EC1 /* BlurryPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D6DA6D5AACA15E9240D115 /* BlurryPhotosView.swift */; };
 		CCD138E681BC8EFBA56F437A /* CleanSpaceWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 96618E4F52AB02CB317D6538 /* CleanSpaceWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CE261B5F52D4DF5EFB7EA3C4 /* VaultManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5F60BEF32A745538DB3F290 /* VaultManager.swift */; };
@@ -122,6 +123,7 @@
 		CDFB8071AC3ABBB99161A5F7 /* CleanSpaceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanSpaceApp.swift; sourceTree = "<group>"; };
 		D8BEBDDEFE1AD29293128E34 /* BlurDetectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlurDetectionService.swift; sourceTree = "<group>"; };
 		DC549EFC0BE31425D72E68D4 /* VideoCompressionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCompressionService.swift; sourceTree = "<group>"; };
+		DC7A8D9F2288840724D000B4 /* StorageWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageWidgetView.swift; sourceTree = "<group>"; };
 		DD5C28D84132B2F9B78B7CC9 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		DE86D75F191B18089271ABBF /* PhotoGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoGroup.swift; sourceTree = "<group>"; };
 		DF107065658210870B762CDA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -141,6 +143,14 @@
 				96618E4F52AB02CB317D6538 /* CleanSpaceWidget.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		0D0765CBA0B76BF4A020DAAC /* Widget */ = {
+			isa = PBXGroup;
+			children = (
+				DC7A8D9F2288840724D000B4 /* StorageWidgetView.swift */,
+			);
+			path = Widget;
 			sourceTree = "<group>";
 		};
 		126DE783CD6D76C3B875F805 /* ViewModels */ = {
@@ -240,6 +250,7 @@
 				A571BE8C05FCE585937CA06F /* SpaceFreed */,
 				314602518D331C510257A742 /* SwipeCleaner */,
 				C0C269E0F32E3AD26E05D048 /* Vault */,
+				0D0765CBA0B76BF4A020DAAC /* Widget */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -482,6 +493,7 @@
 				11033332EC906A99EC94691B /* StorageGaugeView.swift in Sources */,
 				68E29F90807112E442F9EB99 /* StorageInfo.swift in Sources */,
 				7CFDA8445A41A41D72834342 /* StorageService.swift in Sources */,
+				C3535FFC392DFFB5D451DCFF /* StorageWidgetView.swift in Sources */,
 				5E06FF033D1E7543C4F8AC5C /* SwipeCardView.swift in Sources */,
 				A9103E0A14B53228EC5EE54B /* SwipeCleanerView.swift in Sources */,
 				816DFEEAEA66F4B722537C62 /* SwipeCleanerViewModel.swift in Sources */,

@@ -64,9 +64,3 @@ targets:
         ENABLE_USER_SCRIPT_SANDBOXING: NO
         CODE_SIGNING_REQUIRED: NO
         CODE_SIGNING_ALLOWED: NO
-    scheme:
-      build:
-        targets:
-          CleanSpaceWidget: all
-      run:
-        config: Debug

@@ -29,6 +29,8 @@ struct DashboardView: View {
                         cleanupCategoriesSection
                         
                         securitySection
+                        StorageWidgetView(viewModel: viewModel)
+
                         
                         Spacer().frame(height: 100)
                     }
