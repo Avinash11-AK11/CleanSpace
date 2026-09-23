@@ -1,6 +1,7 @@
 import Foundation
 import Photos
 import UIKit
+import Vision
 
 struct BlurryPhotoItem: Identifiable, Hashable, @unchecked Sendable {
     let photo: PhotoItem
@@ -34,16 +35,13 @@ final class BlurDetectionService: @unchecked Sendable {
             let progress = Double(index) / Double(total)
             progressHandler?(progress, "Scanning photo \(index + 1) of \(total)...")
             
-            if let image = await requestThumbnail(for: asset) {
-                let variance = computeLaplacianVariance(image: image)
-                // Normalize: sharp photos typically have variance > 300, blurry < 100
-                let normalizedScore = min(1.0, max(0.0, variance / 400.0))
+            if let cgImage = await requestAnalysisImage(for: asset) {
+                let (isBlurry, score) = analyzeBlur(cgImage: cgImage)
                 
-                // Flag as blurry if variance is low
-                if normalizedScore < 0.28 {
+                if isBlurry {
                     let size = PhotoScanner.shared.estimateAssetSize(asset: asset)
                     let photoItem = PhotoItem(asset: asset, fileSize: size)
-                    blurryItems.append(BlurryPhotoItem(photo: photoItem, sharpnessScore: normalizedScore))
+                    blurryItems.append(BlurryPhotoItem(photo: photoItem, sharpnessScore: score))
                 }
             }
         }
@@ -53,35 +51,97 @@ final class BlurDetectionService: @unchecked Sendable {
         return blurryItems.sorted { $0.sharpnessScore < $1.sharpnessScore }
     }
     
-    /// Requests a small fast thumbnail for edge analysis
-    private func requestThumbnail(for asset: PHAsset) async -> UIImage? {
+    /// Analyzes image sharpness using Vision face capture quality and multi-block Laplacian variance
+    private func analyzeBlur(cgImage: CGImage) -> (isBlurry: Bool, score: Double) {
+        // 1. Pass 1: Vision Face Focus & Motion Blur Quality
+        let faceRequest = VNDetectFaceCaptureQualityRequest()
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        
+        if (try? handler.perform([faceRequest])) != nil,
+           let faces = faceRequest.results, !faces.isEmpty {
+            let qualities = faces.compactMap { $0.faceCaptureQuality }
+            if let minQuality = qualities.min() {
+                // Apple's faceCaptureQuality scores holistic quality factoring in focus, motion blur, and illumination (0.0 to 1.0)
+                // Faces below 0.45 exhibit noticeable motion blur or soft focus
+                if minQuality < 0.45 {
+                    return (true, Double(minQuality))
+                }
+            }
+        }
+        
+        // 2. Pass 2: Local Grid-Based Laplacian & High-Frequency Edge Analysis
+        let (gridSharpness, edgeRatio) = computeGridLaplacianMetrics(cgImage: cgImage)
+        
+        // In sharp photos, the in-focus subject regions produce grid sharpness > 250 and edgeRatio > 0.035
+        // In blurry photos (shaky camera, defocus), the 75th percentile block sharpness drops below 120
+        let isBlurryByGrid = gridSharpness < 120.0 || (gridSharpness < 155.0 && edgeRatio < 0.028)
+        let normalizedScore = min(1.0, max(0.05, gridSharpness / 350.0))
+        
+        return (isBlurryByGrid, normalizedScore)
+    }
+    
+    /// Requests a high-resolution 512x512 image for accurate edge and facial focus analysis
+    private func requestAnalysisImage(for asset: PHAsset) async -> CGImage? {
         await withCheckedContinuation { continuation in
             var resumed = false
             let lock = NSLock()
             
             let options = PHImageRequestOptions()
-            options.deliveryMode = .fastFormat
-            options.resizeMode = .exact
+            options.deliveryMode = .highQualityFormat
+            options.resizeMode = .fast
             options.isSynchronous = false
             options.isNetworkAccessAllowed = true
             
-            let targetSize = CGSize(width: 128, height: 128)
+            let targetSize = CGSize(width: 512, height: 512)
             
-            imageManager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFill, options: options) { image, _ in
+            imageManager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFit, options: options) { image, info in
+                lock.lock()
+                defer { lock.unlock() }
+                
+                let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
+                if !isDegraded && !resumed {
+                    resumed = true
+                    if let img = image {
+                        continuation.resume(returning: self.extractCGImage(from: img))
+                    } else {
+                        continuation.resume(returning: nil)
+                    }
+                }
+            }
+            
+            // Timeout safety to prevent hanging
+            DispatchQueue.global().asyncAfter(deadline: .now() + 2.5) {
                 lock.lock()
                 defer { lock.unlock() }
                 if !resumed {
                     resumed = true
-                    continuation.resume(returning: image)
+                    continuation.resume(returning: nil)
                 }
             }
         }
     }
     
-    /// Computes Laplacian variance on grayscale image pixels
-    private func computeLaplacianVariance(image: UIImage) -> Double {
-        let width = 128
-        let height = 128
+    private func extractCGImage(from image: UIImage) -> CGImage? {
+        if let direct = image.cgImage {
+            return direct
+        }
+        if let ci = image.ciImage {
+            let ciContext = CIContext()
+            return ciContext.createCGImage(ci, from: ci.extent)
+        }
+        let size = image.size
+        guard size.width > 0, size.height > 0 else { return nil }
+        let renderer = UIGraphicsImageRenderer(size: size)
+        let rendered = renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: size))
+        }
+        return rendered.cgImage
+    }
+    
+    /// Evaluates sharpness across an 8x8 grid of blocks to prevent isolated lights from skewing overall blur score
+    private func computeGridLaplacianMetrics(cgImage: CGImage) -> (p75Variance: Double, edgeRatio: Double) {
+        let width = 512
+        let height = 512
         
         var rawData = [UInt8](repeating: 0, count: width * height)
         let colorSpace = CGColorSpaceCreateDeviceGray()
@@ -94,42 +154,76 @@ final class BlurDetectionService: @unchecked Sendable {
             bytesPerRow: width,
             space: colorSpace,
             bitmapInfo: CGImageAlphaInfo.none.rawValue
-        ), let cgImage = image.cgImage else {
-            return 250.0 // Default to neutral sharpness if context fails
+        ) else {
+            return (250.0, 0.05)
         }
         
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
         
-        // 3x3 Laplacian kernel convolution: [0, 1, 0; 1, -4, 1; 0, 1, 0]
-        var laplacianValues = [Double]()
-        laplacianValues.reserveCapacity((width - 2) * (height - 2))
+        // 8x8 grid -> 64 blocks of 64x64 pixels each
+        let gridSize = 8
+        let blockW = width / gridSize
+        let blockH = height / gridSize
         
-        var sum: Double = 0.0
+        var blockVariances: [Double] = []
+        blockVariances.reserveCapacity(gridSize * gridSize)
         
-        for y in 1..<(height - 1) {
-            for x in 1..<(width - 1) {
-                let center = Double(rawData[y * width + x])
-                let top = Double(rawData[(y - 1) * width + x])
-                let bottom = Double(rawData[(y + 1) * width + x])
-                let left = Double(rawData[y * width + (x - 1)])
-                let right = Double(rawData[y * width + (x + 1)])
+        var totalEdgeCount = 0
+        let totalValidPixels = (width - 2) * (height - 2)
+        
+        for by in 0..<gridSize {
+            for bx in 0..<gridSize {
+                let startX = max(1, bx * blockW)
+                let endX = min(width - 2, (bx + 1) * blockW)
+                let startY = max(1, by * blockH)
+                let endY = min(height - 2, (by + 1) * blockH)
                 
-                let val = top + bottom + left + right - (4.0 * center)
-                laplacianValues.append(val)
-                sum += val
+                var laplacians: [Double] = []
+                laplacians.reserveCapacity((endX - startX) * (endY - startY))
+                var sum = 0.0
+                
+                for y in startY..<endY {
+                    let yOffset = y * width
+                    let yPrev = (y - 1) * width
+                    let yNext = (y + 1) * width
+                    
+                    for x in startX..<endX {
+                        let center = Double(rawData[yOffset + x])
+                        let top = Double(rawData[yPrev + x])
+                        let bottom = Double(rawData[yNext + x])
+                        let left = Double(rawData[yOffset + (x - 1)])
+                        let right = Double(rawData[yOffset + (x + 1)])
+                        
+                        let val = top + bottom + left + right - (4.0 * center)
+                        laplacians.append(val)
+                        sum += val
+                        
+                        if abs(val) > 22.0 {
+                            totalEdgeCount += 1
+                        }
+                    }
+                }
+                
+                if !laplacians.isEmpty {
+                    let mean = sum / Double(laplacians.count)
+                    var varSum = 0.0
+                    for val in laplacians {
+                        let diff = val - mean
+                        varSum += diff * diff
+                    }
+                    blockVariances.append(varSum / Double(laplacians.count))
+                }
             }
         }
         
-        guard !laplacianValues.isEmpty else { return 250.0 }
+        guard !blockVariances.isEmpty else { return (250.0, 0.05) }
         
-        let mean = sum / Double(laplacianValues.count)
-        var varianceSum: Double = 0.0
+        blockVariances.sort()
+        // 75th percentile represents the sharpest subject regions (avoiding flat sky at bottom & point lights at top 5%)
+        let p75Index = min(blockVariances.count - 1, Int(Double(blockVariances.count) * 0.75))
+        let p75 = blockVariances[p75Index]
+        let edgeRatio = Double(totalEdgeCount) / Double(max(1, totalValidPixels))
         
-        for val in laplacianValues {
-            let diff = val - mean
-            varianceSum += diff * diff
-        }
-        
-        return varianceSum / Double(laplacianValues.count)
+        return (p75, edgeRatio)
     }
 }

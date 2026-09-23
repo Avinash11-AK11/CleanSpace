@@ -267,6 +267,8 @@ struct LargeVideosView: View {
                                 Text(video.qualityLabel)
                                     .font(.caption2)
                                     .fontWeight(.bold)
+                                    .lineLimit(1)
+                                    .fixedSize(horizontal: true, vertical: false)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
                                     .background(AppTheme.accentOrange.opacity(0.15))
@@ -277,6 +279,8 @@ struct LargeVideosView: View {
                                     Text("Duplicate")
                                         .font(.caption2)
                                         .fontWeight(.bold)
+                                        .lineLimit(1)
+                                        .fixedSize(horizontal: true, vertical: false)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
                                         .background(AppTheme.accentBlue.opacity(0.15))
@@ -287,6 +291,7 @@ struct LargeVideosView: View {
                                 Text(video.formattedDuration)
                                     .font(.caption)
                                     .foregroundColor(AppTheme.subtleGray)
+                                    .lineLimit(1)
                             }
                             
                             if let date = video.creationDate {
@@ -519,6 +524,8 @@ struct DuplicateVideoGroupCard: View {
                                 Text(video.qualityLabel)
                                     .font(.caption2)
                                     .fontWeight(.bold)
+                                    .lineLimit(1)
+                                    .fixedSize(horizontal: true, vertical: false)
                                     .padding(.horizontal, 5)
                                     .padding(.vertical, 1)
                                     .background(AppTheme.accentOrange.opacity(0.15))
@@ -528,6 +535,7 @@ struct DuplicateVideoGroupCard: View {
                                 Text(video.formattedDuration)
                                     .font(.caption)
                                     .foregroundColor(AppTheme.subtleGray)
+                                    .lineLimit(1)
                             }
                             
                             if let date = video.creationDate {

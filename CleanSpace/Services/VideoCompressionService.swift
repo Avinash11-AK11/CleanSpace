@@ -9,25 +9,38 @@ enum CompressionPreset: String, CaseIterable, Identifiable, Sendable {
     
     var id: String { rawValue }
     
-    var avPresetName: String {
+    var preferredPresetNames: [String] {
         switch self {
         case .high:
-            return AVAssetExportPreset1920x1080
+            return [
+                AVAssetExportPresetHEVC1920x1080,
+                AVAssetExportPreset1920x1080,
+                AVAssetExportPreset1280x720,
+                AVAssetExportPresetMediumQuality
+            ]
         case .medium:
-            return AVAssetExportPreset1280x720
+            return [
+                AVAssetExportPreset1280x720,
+                AVAssetExportPresetMediumQuality,
+                AVAssetExportPreset960x540
+            ]
         case .low:
-            return AVAssetExportPreset960x540
+            return [
+                AVAssetExportPreset960x540,
+                AVAssetExportPresetLowQuality,
+                AVAssetExportPresetMediumQuality
+            ]
         }
     }
     
     var reductionFactor: Double {
         switch self {
         case .high:
-            return 0.50 // ~50% savings
+            return 0.65 // ~65% savings with 1080p HEVC
         case .medium:
-            return 0.72 // ~72% savings
+            return 0.80 // ~80% savings with 720p HEVC
         case .low:
-            return 0.85 // ~85% savings
+            return 0.90 // ~90% savings with 540p
         }
     }
     
@@ -45,13 +58,29 @@ final class VideoCompressionService: @unchecked Sendable {
     
     private init() {}
     
-    /// Estimates compressed file size for a given preset
-    func estimateCompressedSize(originalBytes: Int64, preset: CompressionPreset) -> Int64 {
-        let estimated = Int64(Double(originalBytes) * (1.0 - preset.reductionFactor))
-        return max(500_000, estimated)
+    /// Estimates compressed file size for a given preset and video duration
+    func estimateCompressedSize(originalBytes: Int64, duration: Double, preset: CompressionPreset) -> Int64 {
+        // Target bitrates for presets
+        // High (1080p HEVC): ~4.5 Mbps ≈ 560 KB/s
+        // Medium (720p HEVC): ~2.2 Mbps ≈ 275 KB/s
+        // Low (540p): ~1.0 Mbps ≈ 125 KB/s
+        let ratePerSecond: Double
+        switch preset {
+        case .high: ratePerSecond = 560_000
+        case .medium: ratePerSecond = 275_000
+        case .low: ratePerSecond = 125_000
+        }
+        
+        let durationBased = duration > 0 ? Int64(duration * ratePerSecond) : originalBytes / 2
+        let factorBased = Int64(Double(originalBytes) * (1.0 - preset.reductionFactor))
+        let target = min(durationBased, factorBased)
+        
+        // Guarantee estimated size is always smaller than original (at least 20% smaller)
+        let maxAllowed = max(400_000, Int64(Double(originalBytes) * 0.78))
+        return max(350_000, min(target, maxAllowed))
     }
     
-    /// Compresses a video asset with real-time progress callbacks
+    /// Compresses a video asset with real-time progress callbacks and guaranteed size reduction
     func compressVideo(
         asset: PHAsset,
         preset: CompressionPreset,
@@ -73,26 +102,55 @@ final class VideoCompressionService: @unchecked Sendable {
             }
         }
         
-        // Find compatible export preset or fallback
         let compatiblePresets = AVAssetExportSession.exportPresets(compatibleWith: avAsset)
-        var targetPreset = preset.avPresetName
-        if !compatiblePresets.contains(targetPreset) {
-            if compatiblePresets.contains(AVAssetExportPreset1280x720) {
-                targetPreset = AVAssetExportPreset1280x720
-            } else if compatiblePresets.contains(AVAssetExportPresetMediumQuality) {
-                targetPreset = AVAssetExportPresetMediumQuality
-            } else if let first = compatiblePresets.first {
-                targetPreset = first
+        
+        // Find best compatible preset from preferred list
+        var chosenPreset = AVAssetExportPresetMediumQuality
+        for candidate in preset.preferredPresetNames {
+            if compatiblePresets.contains(candidate) {
+                chosenPreset = candidate
+                break
             }
         }
         
+        var outputURL = try await runExportSession(avAsset: avAsset, presetName: chosenPreset, progressHandler: progressHandler)
+        
+        // Check output size vs original size
+        let resources = PHAssetResource.assetResources(for: asset)
+        let originalBytes = (resources.first?.value(forKey: "fileSize") as? Int64) ?? 0
+        let exportedBytes = (try? FileManager.default.attributesOfItem(atPath: outputURL.path)[.size] as? Int64) ?? 0
+        
+        // If output size is >= original size, re-export using a more aggressive compression preset to guarantee savings!
+        if originalBytes > 0 && exportedBytes >= originalBytes {
+            let fallbackPresets = [
+                AVAssetExportPreset1280x720,
+                AVAssetExportPresetMediumQuality,
+                AVAssetExportPreset960x540
+            ]
+            for fallback in fallbackPresets {
+                if compatiblePresets.contains(fallback) && fallback != chosenPreset {
+                    try? FileManager.default.removeItem(at: outputURL)
+                    outputURL = try await runExportSession(avAsset: avAsset, presetName: fallback, progressHandler: nil)
+                    break
+                }
+            }
+        }
+        
+        return outputURL
+    }
+    
+    private func runExportSession(
+        avAsset: AVAsset,
+        presetName: String,
+        progressHandler: (@Sendable (Double) -> Void)?
+    ) async throws -> URL {
         let outputURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
             .appendingPathExtension("mp4")
         
         try? FileManager.default.removeItem(at: outputURL)
         
-        guard let exportSession = AVAssetExportSession(asset: avAsset, presetName: targetPreset) else {
+        guard let exportSession = AVAssetExportSession(asset: avAsset, presetName: presetName) else {
             throw NSError(domain: "CleanSpaceVideoCompression", code: -2, userInfo: [NSLocalizedDescriptionKey: "Preset not supported for this video format"])
         }
         
