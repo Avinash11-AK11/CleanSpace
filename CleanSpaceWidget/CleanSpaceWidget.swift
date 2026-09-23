@@ -5,7 +5,6 @@ struct StorageWidgetEntry: TimelineEntry {
     let date: Date
     let usedBytes: Int64
     let totalBytes: Int64
-    let cleanableBytes: Int64
     
     var usedPercentage: Double {
         guard totalBytes > 0 else { return 0 }
@@ -18,8 +17,7 @@ struct CleanSpaceWidgetProvider: TimelineProvider {
         StorageWidgetEntry(
             date: Date(),
             usedBytes: 85 * 1024 * 1024 * 1024,
-            totalBytes: 128 * 1024 * 1024 * 1024,
-            cleanableBytes: 4 * 1024 * 1024 * 1024
+            totalBytes: 128 * 1024 * 1024 * 1024
         )
     }
 
@@ -46,15 +44,13 @@ struct CleanSpaceWidgetProvider: TimelineProvider {
             return StorageWidgetEntry(
                 date: Date(),
                 usedBytes: used,
-                totalBytes: total,
-                cleanableBytes: 0
+                totalBytes: total
             )
         } catch {
             return StorageWidgetEntry(
                 date: Date(),
                 usedBytes: 60 * 1024 * 1024 * 1024,
-                totalBytes: 128 * 1024 * 1024 * 1024,
-                cleanableBytes: 0
+                totalBytes: 128 * 1024 * 1024 * 1024
             )
         }
     }
@@ -76,38 +72,44 @@ struct CleanSpaceWidgetEntryView: View {
     }
     
     private var smallWidgetView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
                 Image(systemName: "internaldrive.fill")
                     .foregroundColor(Color.green)
+                    .font(.caption)
                 Text("CleanSpace")
-                    .font(.caption2.bold())
-                    .foregroundColor(.secondary)
+                    .font(.caption.bold())
+                    .foregroundColor(.white)
                 Spacer()
             }
             
             Spacer()
             
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(height: 8)
-                
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.green)
-                    .frame(width: max(8, 120 * CGFloat(entry.usedPercentage)), height: 8)
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("\(Int(entry.usedPercentage * 100))% Used")
-                    .font(.subheadline.bold())
+                    .font(.system(size: 22, weight: .heavy, design: .rounded))
+                    .foregroundColor(.white)
+                
                 Text("\(ByteCountFormatter.string(fromByteCount: entry.usedBytes, countStyle: .file)) of \(ByteCountFormatter.string(fromByteCount: entry.totalBytes, countStyle: .file))")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.gray)
             }
+            
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.gray.opacity(0.35))
+                        .frame(height: 7)
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(LinearGradient(colors: [Color.green, Color.blue], startPoint: .leading, endPoint: .trailing))
+                        .frame(width: max(8, proxy.size.width * CGFloat(entry.usedPercentage)), height: 7)
+                }
+            }
+            .frame(height: 7)
         }
         .containerBackground(for: .widget) {
-            Color.black
+            Color(red: 0.12, green: 0.13, blue: 0.16)
         }
     }
     
@@ -119,27 +121,31 @@ struct CleanSpaceWidgetEntryView: View {
                         .foregroundColor(Color.green)
                     Text("CleanSpace Storage")
                         .font(.caption.bold())
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.gray)
                 }
                 
                 Spacer()
                 
                 Text("\(ByteCountFormatter.string(fromByteCount: entry.usedBytes, countStyle: .file)) Used")
-                    .font(.title2.bold())
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
                 
                 Text("Total Capacity: \(ByteCountFormatter.string(fromByteCount: entry.totalBytes, countStyle: .file))")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .font(.caption)
+                    .foregroundColor(Color.gray)
                 
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 8)
-                    
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.green)
-                        .frame(width: max(8, 180 * CGFloat(entry.usedPercentage)), height: 8)
+                GeometryReader { proxy in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.gray.opacity(0.35))
+                            .frame(height: 8)
+                        
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(LinearGradient(colors: [Color.green, Color.blue], startPoint: .leading, endPoint: .trailing))
+                            .frame(width: max(8, proxy.size.width * CGFloat(entry.usedPercentage)), height: 8)
+                    }
                 }
+                .frame(height: 8)
             }
             
             Spacer()
@@ -148,30 +154,40 @@ struct CleanSpaceWidgetEntryView: View {
                 ZStack {
                     Circle()
                         .stroke(Color.gray.opacity(0.3), lineWidth: 8)
-                        .frame(width: 65, height: 65)
+                        .frame(width: 72, height: 72)
                     Circle()
                         .trim(from: 0.0, to: CGFloat(entry.usedPercentage))
-                        .stroke(Color.green, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .stroke(
+                            LinearGradient(colors: [Color.green, Color.blue], startPoint: .topLeading, endPoint: .bottomTrailing),
+                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                        )
                         .rotationEffect(.degrees(-90))
-                        .frame(width: 65, height: 65)
+                        .frame(width: 72, height: 72)
                     Text("\(Int(entry.usedPercentage * 100))%")
-                        .font(.caption.bold())
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
                 }
                 
                 Text("Storage")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.gray)
             }
         }
         .containerBackground(for: .widget) {
-            Color.black
+            Color(red: 0.12, green: 0.13, blue: 0.16)
         }
     }
 }
 
 @main
+struct CleanSpaceWidgetBundle: WidgetBundle {
+    var body: some Widget {
+        CleanSpaceWidget()
+    }
+}
+
 struct CleanSpaceWidget: Widget {
-    let kind: String = "CleanSpaceWidget"
+    let kind: String = "com.cleanspace.app.CleanSpaceWidget"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: CleanSpaceWidgetProvider()) { entry in
@@ -180,5 +196,6 @@ struct CleanSpaceWidget: Widget {
         .configurationDisplayName("Storage Status")
         .description("Track your iPhone storage at a glance.")
         .supportedFamilies([.systemSmall, .systemMedium])
+        .contentMarginsDisabled()
     }
 }
