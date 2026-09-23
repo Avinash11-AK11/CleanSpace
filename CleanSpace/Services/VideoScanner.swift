@@ -73,24 +73,36 @@ final class VideoScanner: Sendable {
     
     /// Evaluates if two videos are duplicate or near-identical
     private func areVideosDuplicate(_ v1: VideoItem, _ v2: VideoItem) -> Bool {
-        // 1. Duration check (within 0.25 seconds)
+        // 1. Duration check (within 0.35 seconds)
         let durationDiff = abs(v1.duration - v2.duration)
-        guard durationDiff <= 0.25 else { return false }
+        guard durationDiff <= 0.35 else { return false }
         
         // 2. Resolution check (same dimensions)
         let sameDimensions = (v1.pixelWidth == v2.pixelWidth && v1.pixelHeight == v2.pixelHeight) ||
                              (v1.pixelWidth == v2.pixelHeight && v1.pixelHeight == v2.pixelWidth)
-        guard sameDimensions else { return false }
         
-        // 3. File size check (within 3% or within 100KB)
+        // 3. Aspect ratio check
+        let ar1 = v1.pixelHeight > 0 ? Double(v1.pixelWidth) / Double(v1.pixelHeight) : 0
+        let ar2 = v2.pixelHeight > 0 ? Double(v2.pixelWidth) / Double(v2.pixelHeight) : 0
+        let sameAspectRatio = abs(ar1 - ar2) < 0.05 || (ar1 > 0 && ar2 > 0 && abs(ar1 - (1.0 / ar2)) < 0.05)
+        
+        // A) Exact duplicate: same dimensions AND similar file size (within 5% or 200KB)
         let maxSize = max(v1.fileSize, v2.fileSize)
-        if maxSize > 0 {
+        if sameDimensions && maxSize > 0 {
             let sizeDiff = abs(v1.fileSize - v2.fileSize)
-            let allowedDiff = max(150_000, Int64(Double(maxSize) * 0.03))
-            guard sizeDiff <= allowedDiff else { return false }
+            let allowedDiff = max(200_000, Int64(Double(maxSize) * 0.05))
+            if sizeDiff <= allowedDiff {
+                return true
+            }
         }
         
-        return true
+        // B) Compressed / Resized duplicate copy of the same video:
+        // Same duration and aspect ratio
+        if sameAspectRatio && durationDiff <= 0.25 {
+            return true
+        }
+        
+        return false
     }
     
     /// Selects the best original video from a duplicate group
@@ -112,7 +124,7 @@ final class VideoScanner: Sendable {
         } ?? videos[0]
     }
     
-    private func estimateVideoSize(asset: PHAsset) -> Int64 {
+    func estimateVideoSize(asset: PHAsset) -> Int64 {
         let resources = PHAssetResource.assetResources(for: asset)
         if let first = resources.first,
            let size = first.value(forKey: "fileSize") as? Int64, size > 0 {

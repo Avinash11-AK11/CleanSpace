@@ -73,7 +73,7 @@ final class VideoCompressionService: @unchecked Sendable {
             }
         }
         
-        // Find compatible export preset or fallback to medium/passthrough
+        // Find compatible export preset or fallback
         let compatiblePresets = AVAssetExportSession.exportPresets(compatibleWith: avAsset)
         var targetPreset = preset.avPresetName
         if !compatiblePresets.contains(targetPreset) {
@@ -130,26 +130,38 @@ final class VideoCompressionService: @unchecked Sendable {
         }
     }
     
-    /// Saves the compressed video to the user's Photos library and optionally deletes the original uncompressed video
+    /// Saves the compressed video to the user's Photos library and optionally deletes the original uncompressed video.
+    /// Returns the local identifier of the newly created compressed asset, or nil if created without tracked identifier.
     func saveCompressedVideo(
         fileURL: URL,
         originalAsset: PHAsset?,
         deleteOriginal: Bool
-    ) async throws {
-        // 1. Save new compressed video
-        var placeholder: PHObjectPlaceholder?
+    ) async throws -> (newAssetId: String?, originalDeleted: Bool) {
+        var placeholderId: String? = nil
+        
+        // 1. Save new compressed video FIRST (independent transaction)
         try await PHPhotoLibrary.shared().performChanges {
             let request = PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: fileURL)
-            placeholder = request?.placeholderForCreatedAsset
+            if let placeholder = request?.placeholderForCreatedAsset {
+                placeholderId = placeholder.localIdentifier
+            }
         }
         
-        // 2. Optionally delete original
-        if deleteOriginal, let original = originalAsset {
-            try await CleanupService.shared.deleteAssets(assets: [original])
-        }
-        
-        // Clean up temporary local file
+        // Clean up temporary local file now that it is saved
         try? FileManager.default.removeItem(at: fileURL)
-        _ = placeholder
+        
+        // 2. Optionally delete original in a SEPARATE transaction so a "Don't Allow" does NOT fail the save
+        var originalDeleted = false
+        if deleteOriginal, let original = originalAsset {
+            do {
+                try await CleanupService.shared.deleteAssets(assets: [original])
+                originalDeleted = true
+            } catch {
+                print("CleanSpace: User chose 'Don't Allow' or deletion was cancelled: \(error). New compressed video remains saved.")
+                originalDeleted = false
+            }
+        }
+        
+        return (placeholderId, originalDeleted)
     }
 }

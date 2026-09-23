@@ -3,7 +3,7 @@ import Photos
 
 struct VideoCompressorView: View {
     let video: VideoItem
-    var onCompletion: (() -> Void)? = nil
+    var onCompletion: ((_ newAssetId: String?, _ originalDeleted: Bool) -> Void)? = nil
     
     @Environment(\.dismiss) private var dismiss
     @State private var selectedPreset: CompressionPreset = .medium
@@ -16,6 +16,9 @@ struct VideoCompressorView: View {
     @State private var actualCompressedSize: Int64 = 0
     @State private var errorMessage: String?
     @State private var showError = false
+    @State private var originalWasDeleted = false
+    @State private var createdAssetId: String? = nil
+    @State private var hasNotifiedCompletion = false
     
     var estimatedSize: Int64 {
         VideoCompressionService.shared.estimateCompressedSize(originalBytes: video.fileSize, preset: selectedPreset)
@@ -170,7 +173,7 @@ struct VideoCompressorView: View {
                                     .font(.subheadline)
                                     .fontWeight(.medium)
                                     .foregroundColor(.primary)
-                                Text("Safely removes the heavy uncompressed video after saving")
+                                Text(deleteOriginal ? "Saves space by moving original to Recently Deleted" : "Keeps both original and newly compressed copy")
                                     .font(.caption)
                                     .foregroundColor(AppTheme.subtleGray)
                             }
@@ -228,7 +231,7 @@ struct VideoCompressorView: View {
                                 .fontWeight(.bold)
                                 .foregroundColor(.primary)
                             
-                            Text("The compressed video has been saved to your Photo Library.")
+                            Text(originalWasDeleted ? "Compressed video saved and original removed." : "Compressed copy saved! Both original and compressed videos are in your library.")
                                 .font(.subheadline)
                                 .foregroundColor(AppTheme.subtleGray)
                                 .multilineTextAlignment(.center)
@@ -236,10 +239,10 @@ struct VideoCompressorView: View {
                             if actualCompressedSize > 0 {
                                 let saved = max(0, video.fileSize - actualCompressedSize)
                                 VStack(spacing: 4) {
-                                    Text("Space Saved")
+                                    Text(originalWasDeleted ? "Space Saved" : "Compressed File Size")
                                         .font(.caption)
                                         .foregroundColor(AppTheme.subtleGray)
-                                    Text(ByteCountFormatter.string(fromByteCount: saved, countStyle: .file))
+                                    Text(ByteCountFormatter.string(fromByteCount: originalWasDeleted ? saved : actualCompressedSize, countStyle: .file))
                                         .font(.system(size: 32, weight: .heavy, design: .rounded))
                                         .foregroundColor(AppTheme.accentEmerald)
                                 }
@@ -250,8 +253,8 @@ struct VideoCompressorView: View {
                             }
                             
                             Button("Done") {
+                                notifyCompletionOnce()
                                 dismiss()
-                                onCompletion?()
                             }
                             .primaryButtonStyle(bg: AppTheme.accentEmerald)
                             .padding(.top, 12)
@@ -266,6 +269,11 @@ struct VideoCompressorView: View {
             .background(AppTheme.primaryBackground)
             .navigationTitle("Compress Video")
             .navigationBarTitleDisplayMode(.inline)
+            .onDisappear {
+                if isCompleted {
+                    notifyCompletionOnce()
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if !isCompressing {
@@ -282,6 +290,12 @@ struct VideoCompressorView: View {
                 Text(errorMessage ?? "An unexpected error occurred during compression.")
             }
         }
+    }
+    
+    private func notifyCompletionOnce() {
+        guard !hasNotifiedCompletion else { return }
+        hasNotifiedCompletion = true
+        onCompletion?(createdAssetId, originalWasDeleted)
     }
     
     private func startCompression() {
@@ -306,13 +320,15 @@ struct VideoCompressorView: View {
                 let finalBytes = (attrs?[.size] as? Int64) ?? estimatedSize
                 self.actualCompressedSize = finalBytes
                 
-                try await VideoCompressionService.shared.saveCompressedVideo(
+                let result = try await VideoCompressionService.shared.saveCompressedVideo(
                     fileURL: tempURL,
                     originalAsset: video.asset,
                     deleteOriginal: deleteOriginal
                 )
                 
-                if deleteOriginal {
+                self.createdAssetId = result.newAssetId
+                self.originalWasDeleted = result.originalDeleted
+                if result.originalDeleted {
                     CleanupManager.shared.deletedAssetIds.insert(video.id)
                 }
                 

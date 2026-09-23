@@ -88,10 +88,10 @@ struct LargeVideosView: View {
         .navigationTitle("Videos")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            syncDeletedVideos()
+            reloadVideos()
         }
         .onChange(of: cleanupManager.deletedAssetIds) {
-            syncDeletedVideos()
+            reloadVideos()
         }
         .sheet(item: $previewVideoAsset) { asset in
             if let player = previewPlayer {
@@ -109,8 +109,8 @@ struct LargeVideosView: View {
             }
         }
         .sheet(item: $videoToCompress) { video in
-            VideoCompressorView(video: video) {
-                syncDeletedVideos()
+            VideoCompressorView(video: video) { newAssetId, originalDeleted in
+                reloadVideos(newAssetId: newAssetId)
             }
             .presentationDragIndicator(.visible)
         }
@@ -147,18 +147,38 @@ struct LargeVideosView: View {
                         .foregroundColor(AppTheme.subtleGray)
                 }
                 Spacer()
-                Button("Auto-Select Duplicates") {
-                    withAnimation {
-                        cleanupManager.selectAllDuplicateVideosExcludingBest(groups: duplicateGroups)
+                
+                HStack(spacing: 8) {
+                    Button("Keep All") {
+                        withAnimation {
+                            for group in duplicateGroups {
+                                for video in group.videos {
+                                    cleanupManager.selectedVideoIds.remove(video.id)
+                                }
+                            }
+                        }
                     }
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(AppTheme.accentEmerald.opacity(0.12))
+                    .foregroundColor(AppTheme.accentEmerald)
+                    .clipShape(Capsule())
+                    
+                    Button("Auto-Select") {
+                        withAnimation {
+                            cleanupManager.selectAllDuplicateVideosExcludingBest(groups: duplicateGroups)
+                        }
+                    }
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(AppTheme.accentBlue.opacity(0.12))
+                    .foregroundColor(AppTheme.accentBlue)
+                    .clipShape(Capsule())
                 }
-                .font(.caption)
-                .fontWeight(.semibold)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(AppTheme.accentBlue.opacity(0.12))
-                .foregroundColor(AppTheme.accentBlue)
-                .clipShape(Capsule())
             }
             .padding(.horizontal)
             
@@ -323,25 +343,31 @@ struct LargeVideosView: View {
         }
     }
     
-    // MARK: - Synchronize Deleted Videos
-    private func syncDeletedVideos() {
-        guard !cleanupManager.deletedAssetIds.isEmpty else { return }
-        withAnimation {
-            videos.removeAll { cleanupManager.deletedAssetIds.contains($0.id) }
-            
-            var updatedGroups: [VideoGroup] = []
-            for group in duplicateGroups {
-                let remaining = group.videos.filter { !cleanupManager.deletedAssetIds.contains($0.id) }
-                if remaining.count >= 2 {
-                    var updated = group
-                    updated.videos = remaining
-                    if let best = updated.recommendedBestId, !remaining.contains(where: { $0.id == best }) {
-                        updated.recommendedBestId = remaining.first?.id
-                    }
-                    updatedGroups.append(updated)
-                }
+    // MARK: - Reload Videos & Duplicates
+    private func reloadVideos(newAssetId: String? = nil) {
+        var updatedVideos = VideoScanner.shared.fetchLargeVideos()
+        
+        // If a newly compressed video was created and isn't in the initial fetch yet, fetch it directly
+        if let newId = newAssetId, !updatedVideos.contains(where: { $0.id == newId }) {
+            let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [newId], options: nil)
+            if let newAsset = fetchResult.firstObject {
+                let size = VideoScanner.shared.estimateVideoSize(asset: newAsset)
+                updatedVideos.insert(VideoItem(asset: newAsset, fileSize: size), at: 0)
             }
-            duplicateGroups = updatedGroups
+        }
+        
+        // Exclude any deleted assets
+        if !cleanupManager.deletedAssetIds.isEmpty {
+            updatedVideos.removeAll { cleanupManager.deletedAssetIds.contains($0.id) }
+        }
+        
+        withAnimation {
+            self.videos = updatedVideos
+            self.duplicateGroups = VideoScanner.shared.findDuplicateVideoGroups(videos: updatedVideos)
+            
+            for v in updatedVideos {
+                cleanupManager.allVideosMap[v.id] = v
+            }
         }
     }
     
@@ -368,6 +394,10 @@ struct DuplicateVideoGroupCard: View {
     let onCompress: (VideoItem) -> Void
     @ObservedObject private var cleanupManager = CleanupManager.shared
     
+    private var hasSelectedDuplicates: Bool {
+        group.videos.contains { cleanupManager.selectedVideoIds.contains($0.id) }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -388,22 +418,50 @@ struct DuplicateVideoGroupCard: View {
                 
                 Spacer()
                 
-                Button(group.videos.count - 1 == 1 ? "Select Duplicate" : "Select Duplicates") {
-                    withAnimation {
-                        guard let bestId = group.recommendedBestId else { return }
-                        for video in group.videos where video.id != bestId {
-                            cleanupManager.selectedVideoIds.insert(video.id)
-                            cleanupManager.allVideosMap[video.id] = video
+                HStack(spacing: 6) {
+                    if hasSelectedDuplicates {
+                        Button("Keep Both") {
+                            withAnimation {
+                                for video in group.videos {
+                                    cleanupManager.selectedVideoIds.remove(video.id)
+                                }
+                            }
                         }
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(AppTheme.accentEmerald.opacity(0.12))
+                        .foregroundColor(AppTheme.accentEmerald)
+                        .clipShape(Capsule())
+                    } else {
+                        Button(group.videos.count - 1 == 1 ? "Select Duplicate" : "Select Duplicates") {
+                            withAnimation {
+                                guard let bestId = group.recommendedBestId else { return }
+                                for video in group.videos where video.id != bestId {
+                                    cleanupManager.selectedVideoIds.insert(video.id)
+                                    cleanupManager.allVideosMap[video.id] = video
+                                }
+                            }
+                        }
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(AppTheme.accentBlue.opacity(0.12))
+                        .foregroundColor(AppTheme.accentBlue)
+                        .clipShape(Capsule())
+                        
+                        Text("Keeping Both")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(AppTheme.accentEmerald)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(AppTheme.accentEmerald.opacity(0.1))
+                            .clipShape(Capsule())
                     }
                 }
-                .font(.caption2)
-                .fontWeight(.bold)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(AppTheme.accentBlue.opacity(0.12))
-                .foregroundColor(AppTheme.accentBlue)
-                .clipShape(Capsule())
             }
             
             Divider()

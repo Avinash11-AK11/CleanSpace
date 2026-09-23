@@ -36,7 +36,7 @@ struct SpaceFreedView: View {
                 VStack(spacing: 8) {
                     Text("Clean Complete! 🎉")
                         .font(.system(size: 30, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                     
                     Text("You've successfully freed up valuable space")
                         .font(.subheadline)
@@ -60,7 +60,7 @@ struct SpaceFreedView: View {
                             .foregroundColor(AppTheme.accentEmerald)
                         Text("\(cleanupManager.lastFreedItemCount) items safely removed")
                             .font(.subheadline.bold())
-                            .foregroundColor(.white)
+                            .foregroundColor(.primary)
                     }
                     
                     Divider()
@@ -90,10 +90,10 @@ struct SpaceFreedView: View {
                                 Text("Share")
                             }
                             .font(.caption.bold())
-                            .foregroundColor(.white)
+                            .foregroundColor(AppTheme.accentBlue)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(AppTheme.cardBackground)
+                            .background(AppTheme.accentBlue.opacity(0.12))
                             .clipShape(Capsule())
                         }
                     }

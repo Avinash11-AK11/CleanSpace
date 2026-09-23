@@ -228,7 +228,7 @@ private struct PinButton: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 28, weight: .medium, design: .rounded))
-                .foregroundColor(.white)
+                .foregroundColor(.primary)
                 .frame(width: 75, height: 75)
                 .background(AppTheme.cardBackground)
                 .clipShape(Circle())
