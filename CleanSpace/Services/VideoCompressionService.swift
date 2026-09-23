@@ -3,61 +3,180 @@ import Photos
 import AVFoundation
 
 enum CompressionPreset: String, CaseIterable, Identifiable, Sendable {
-    case high = "1080p High Quality"
-    case medium = "720p Balanced (Recommended)"
-    case low = "540p Maximum Savings"
+    case high = "High Quality"
+    case medium = "Balanced (Recommended)"
+    case low = "Maximum Savings"
     
     var id: String { rawValue }
     
-    var preferredPresetNames: [String] {
+    func title(for video: VideoItem) -> String {
+        let maxDim = max(video.pixelWidth, video.pixelHeight)
+        switch self {
+        case .high:
+            if maxDim >= 2160 { return "1080p Full HD" }
+            if maxDim >= 1080 { return "1080p High Quality" }
+            if maxDim >= 720 { return "720p High Quality" }
+            return "SD High Quality"
+        case .medium:
+            if maxDim >= 1080 { return "720p Balanced (Recommended)" }
+            if maxDim >= 720 { return "540p Balanced (Recommended)" }
+            return "SD Balanced (Recommended)"
+        case .low:
+            if maxDim >= 1080 { return "540p Maximum Savings" }
+            if maxDim >= 720 { return "480p Maximum Savings" }
+            return "Compact SD Savings"
+        }
+    }
+    
+    func subtitle(for video: VideoItem) -> String {
+        let maxDim = max(video.pixelWidth, video.pixelHeight)
+        switch self {
+        case .high:
+            if maxDim >= 2160 { return "Downscaled from 4K • Sharp HD detail" }
+            if maxDim >= 1080 { return "Retains 1080p HD • Optimized bitrate" }
+            if maxDim >= 720 { return "Retains 720p HD • Optimized bitrate" }
+            return "Preserves source resolution • Optimized size"
+        case .medium:
+            if maxDim >= 1080 { return "Standard 720p HD • Ideal balance of clarity & size" }
+            if maxDim >= 720 { return "Downscaled to 540p • Great space savings" }
+            return "Balanced compression for smaller storage"
+        case .low:
+            if maxDim >= 1080 { return "Compact 540p SD • Highest storage reclaimed" }
+            if maxDim >= 720 { return "Compact 480p SD • Maximum storage reclaimed" }
+            return "Highest compression for minimum file size"
+        }
+    }
+    
+    func badge(for video: VideoItem) -> String {
+        let maxDim = max(video.pixelWidth, video.pixelHeight)
+        switch self {
+        case .high:
+            return maxDim >= 1080 ? "1080p" : (maxDim >= 720 ? "720p" : "SD")
+        case .medium:
+            return maxDim >= 1080 ? "720p" : (maxDim >= 720 ? "540p" : "SD")
+        case .low:
+            return maxDim >= 1080 ? "540p" : (maxDim >= 720 ? "480p" : "SD")
+        }
+    }
+    
+    func preferredPresetNames(assetWidth: Int = 1920, assetHeight: Int = 1080) -> [String] {
+        let maxDim = max(assetWidth, assetHeight)
         switch self {
         case .high:
             #if targetEnvironment(simulator)
-            return [
-                AVAssetExportPreset1920x1080,
-                AVAssetExportPreset1280x720,
-                AVAssetExportPresetMediumQuality
-            ]
+            if maxDim >= 1080 {
+                return [
+                    AVAssetExportPreset1920x1080,
+                    AVAssetExportPreset1280x720,
+                    AVAssetExportPresetMediumQuality
+                ]
+            } else if maxDim >= 720 {
+                return [
+                    AVAssetExportPreset1280x720,
+                    AVAssetExportPresetMediumQuality
+                ]
+            } else {
+                return [
+                    AVAssetExportPresetMediumQuality,
+                    AVAssetExportPreset960x540
+                ]
+            }
             #else
-            return [
-                AVAssetExportPresetHEVC1920x1080,
-                AVAssetExportPreset1920x1080,
-                AVAssetExportPreset1280x720,
-                AVAssetExportPresetMediumQuality
-            ]
+            if maxDim >= 1080 {
+                return [
+                    AVAssetExportPresetHEVC1920x1080,
+                    AVAssetExportPreset1920x1080,
+                    AVAssetExportPreset1280x720,
+                    AVAssetExportPresetMediumQuality
+                ]
+            } else if maxDim >= 720 {
+                return [
+                    AVAssetExportPresetHEVC1280x720,
+                    AVAssetExportPreset1280x720,
+                    AVAssetExportPresetMediumQuality
+                ]
+            } else {
+                return [
+                    AVAssetExportPresetMediumQuality,
+                    AVAssetExportPreset960x540
+                ]
+            }
             #endif
+            
         case .medium:
             #if targetEnvironment(simulator)
-            return [
-                AVAssetExportPreset1280x720,
-                AVAssetExportPresetMediumQuality,
-                AVAssetExportPreset960x540
-            ]
+            if maxDim >= 1080 {
+                return [
+                    AVAssetExportPreset1280x720,
+                    AVAssetExportPresetMediumQuality,
+                    AVAssetExportPreset960x540
+                ]
+            } else if maxDim >= 720 {
+                return [
+                    AVAssetExportPreset960x540,
+                    AVAssetExportPresetMediumQuality
+                ]
+            } else {
+                return [
+                    AVAssetExportPresetLowQuality,
+                    AVAssetExportPreset640x480
+                ]
+            }
             #else
-            return [
-                AVAssetExportPresetHEVC1280x720,
-                AVAssetExportPreset1280x720,
-                AVAssetExportPresetMediumQuality,
-                AVAssetExportPreset960x540
-            ]
+            if maxDim >= 1080 {
+                return [
+                    AVAssetExportPresetHEVC1280x720,
+                    AVAssetExportPreset1280x720,
+                    AVAssetExportPresetMediumQuality,
+                    AVAssetExportPreset960x540
+                ]
+            } else if maxDim >= 720 {
+                return [
+                    AVAssetExportPresetHEVC960x540,
+                    AVAssetExportPreset960x540,
+                    AVAssetExportPresetMediumQuality
+                ]
+            } else {
+                return [
+                    AVAssetExportPresetLowQuality,
+                    AVAssetExportPreset640x480
+                ]
+            }
             #endif
+            
         case .low:
-            return [
-                AVAssetExportPreset960x540,
-                AVAssetExportPresetLowQuality,
-                AVAssetExportPresetMediumQuality
-            ]
+            if maxDim >= 1080 {
+                return [
+                    AVAssetExportPreset960x540,
+                    AVAssetExportPresetLowQuality,
+                    AVAssetExportPresetMediumQuality
+                ]
+            } else if maxDim >= 720 {
+                return [
+                    AVAssetExportPreset640x480,
+                    AVAssetExportPresetLowQuality,
+                    AVAssetExportPreset960x540
+                ]
+            } else {
+                return [
+                    AVAssetExportPresetLowQuality
+                ]
+            }
         }
+    }
+    
+    var preferredPresetNames: [String] {
+        preferredPresetNames(assetWidth: 1920, assetHeight: 1080)
     }
     
     var reductionFactor: Double {
         switch self {
         case .high:
-            return 0.65 // ~65% savings with 1080p
+            return 0.45 // ~45% average savings
         case .medium:
-            return 0.80 // ~80% savings with 720p
+            return 0.70 // ~70% average savings
         case .low:
-            return 0.90 // ~90% savings with 540p
+            return 0.88 // ~88% average savings
         }
     }
     
@@ -75,21 +194,63 @@ final class VideoCompressionService: @unchecked Sendable {
     
     private init() {}
     
-    /// Estimates compressed file size for a given preset and video duration
-    func estimateCompressedSize(originalBytes: Int64, duration: Double, preset: CompressionPreset) -> Int64 {
-        let ratePerSecond: Double
+    /// Estimates compressed file size for a given preset, video duration, and resolution
+    func estimateCompressedSize(
+        originalBytes: Int64,
+        duration: Double,
+        preset: CompressionPreset,
+        videoWidth: Int = 1920,
+        videoHeight: Int = 1080
+    ) -> Int64 {
+        guard originalBytes > 0 else { return 0 }
+        let maxDim = max(videoWidth, videoHeight)
+        let effectiveDuration = duration > 0 ? duration : 30.0
+        
+        let targetRate: Double
+        let minReduction: Double
+        let maxReduction: Double
+        
         switch preset {
-        case .high: ratePerSecond = 560_000
-        case .medium: ratePerSecond = 275_000
-        case .low: ratePerSecond = 125_000
+        case .high:
+            if maxDim >= 1080 {
+                targetRate = 1_000_000 // ~8 Mbps
+            } else if maxDim >= 720 {
+                targetRate = 500_000   // ~4 Mbps
+            } else {
+                targetRate = 280_000   // ~2.2 Mbps
+            }
+            minReduction = 0.25
+            maxReduction = 0.55
+            
+        case .medium:
+            if maxDim >= 1080 {
+                targetRate = 500_000   // ~4 Mbps (720p HD)
+            } else if maxDim >= 720 {
+                targetRate = 260_000   // ~2.1 Mbps (540p)
+            } else {
+                targetRate = 160_000   // ~1.3 Mbps
+            }
+            minReduction = 0.50
+            maxReduction = 0.78
+            
+        case .low:
+            if maxDim >= 1080 {
+                targetRate = 220_000   // ~1.8 Mbps (540p SD)
+            } else if maxDim >= 720 {
+                targetRate = 140_000   // ~1.1 Mbps (480p)
+            } else {
+                targetRate = 90_000    // ~0.7 Mbps
+            }
+            minReduction = 0.75
+            maxReduction = 0.92
         }
         
-        let durationBased = duration > 0 ? Int64(duration * ratePerSecond) : originalBytes / 2
-        let factorBased = Int64(Double(originalBytes) * (1.0 - preset.reductionFactor))
-        let target = min(durationBased, factorBased)
+        let bitrateBased = Int64(effectiveDuration * targetRate)
+        let minAllowedSize = Int64(Double(originalBytes) * (1.0 - maxReduction))
+        let maxAllowedSize = Int64(Double(originalBytes) * (1.0 - minReduction))
         
-        let maxAllowed = max(400_000, Int64(Double(originalBytes) * 0.78))
-        return max(350_000, min(target, maxAllowed))
+        let clamped = min(max(bitrateBased, minAllowedSize), maxAllowedSize)
+        return max(200_000, min(clamped, Int64(Double(originalBytes) * 0.82)))
     }
     
     /// Compresses a video asset with real-time progress callbacks and guaranteed size reduction
@@ -135,7 +296,8 @@ final class VideoCompressionService: @unchecked Sendable {
         var lastError: Error?
         var outputURL: URL?
         
-        for candidate in preset.preferredPresetNames {
+        let candidates = preset.preferredPresetNames(assetWidth: asset.pixelWidth, assetHeight: asset.pixelHeight)
+        for candidate in candidates {
             guard compatiblePresets.contains(candidate) else { continue }
             
             do {

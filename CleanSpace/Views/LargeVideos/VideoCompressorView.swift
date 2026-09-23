@@ -21,15 +21,28 @@ struct VideoCompressorView: View {
     @State private var hasNotifiedCompletion = false
     
     var estimatedSize: Int64 {
-        VideoCompressionService.shared.estimateCompressedSize(originalBytes: video.fileSize, duration: video.duration, preset: selectedPreset)
+        VideoCompressionService.shared.estimateCompressedSize(
+            originalBytes: video.fileSize,
+            duration: video.duration,
+            preset: selectedPreset,
+            videoWidth: video.pixelWidth,
+            videoHeight: video.pixelHeight
+        )
     }
     
     var estimatedSavings: Int64 {
         max(0, video.fileSize - estimatedSize)
     }
     
+    var reclaimPercent: Int {
+        guard video.fileSize > 0 else { return 0 }
+        return min(99, max(5, Int(round((Double(estimatedSavings) / Double(video.fileSize)) * 100.0))))
+    }
+    
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            sheetHeaderBar
+            
             ScrollView {
                 VStack(spacing: 20) {
                     videoOverviewCard
@@ -48,37 +61,66 @@ struct VideoCompressorView: View {
                 .padding(.top, 16)
             }
             .background(AppTheme.primaryBackground)
-            .navigationTitle("Compress Video")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
-            .onDisappear {
-                if isCompleted {
-                    notifyCompletionOnce()
-                }
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    if !isCompressing {
-                        Button("Cancel") {
-                            dismiss()
-                        }
-                        .foregroundColor(AppTheme.accentEmerald)
-                    }
-                }
-            }
-            .alert("Compression Failed", isPresented: $showError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(errorMessage ?? "An unexpected error occurred during compression.")
+        }
+        .background(AppTheme.primaryBackground)
+        .onDisappear {
+            if isCompleted {
+                notifyCompletionOnce()
             }
         }
+        .alert("Compression Failed", isPresented: $showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage ?? "An unexpected error occurred during compression.")
+        }
+    }
+    
+    private var sheetHeaderBar: some View {
+        HStack {
+            if !isCompressing {
+                Button("Cancel") {
+                    dismiss()
+                }
+                .font(.body)
+                .fontWeight(.medium)
+                .foregroundColor(AppTheme.accentEmerald)
+            } else {
+                Text("")
+                    .frame(width: 50)
+            }
+            
+            Spacer()
+            
+            Text("Compress Video")
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+            
+            Spacer()
+            
+            // Invisible balance item for exact centering
+            Text("Cancel")
+                .font(.body)
+                .fontWeight(.medium)
+                .opacity(0)
+                .accessibilityHidden(true)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 14)
+        .padding(.bottom, 12)
+        .background(AppTheme.cardBackground)
+        .overlay(
+            Rectangle()
+                .fill(AppTheme.cardBorder.opacity(0.5))
+                .frame(height: 1),
+            alignment: .bottom
+        )
     }
     
     private var videoOverviewCard: some View {
         HStack(spacing: 16) {
             PHAssetThumbnailView(asset: video.asset)
-                .frame(width: 80, height: 80)
+                .frame(width: 76, height: 76)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             
             VStack(alignment: .leading, spacing: 6) {
@@ -101,6 +143,17 @@ struct VideoCompressorView: View {
                         .background(AppTheme.accentOrange.opacity(0.15))
                         .foregroundColor(AppTheme.accentOrange)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
+                    
+                    if video.pixelWidth > 0 && video.pixelHeight > 0 {
+                        Text("\(video.pixelWidth)×\(video.pixelHeight)")
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .foregroundColor(AppTheme.subtleGray)
+                    }
+                    
+                    Text("•")
+                        .font(.caption2)
+                        .foregroundColor(AppTheme.subtleGray.opacity(0.6))
                     
                     Text(video.formattedDuration)
                         .font(.caption)
@@ -126,8 +179,15 @@ struct VideoCompressorView: View {
             VStack(spacing: 10) {
                 ForEach(CompressionPreset.allCases) { preset in
                     let isSelected = selectedPreset == preset
-                    let estSize = VideoCompressionService.shared.estimateCompressedSize(originalBytes: video.fileSize, duration: video.duration, preset: preset)
-                    let pct = max(15, Int((1.0 - (Double(estSize) / Double(max(1, video.fileSize)))) * 100))
+                    let estSize = VideoCompressionService.shared.estimateCompressedSize(
+                        originalBytes: video.fileSize,
+                        duration: video.duration,
+                        preset: preset,
+                        videoWidth: video.pixelWidth,
+                        videoHeight: video.pixelHeight
+                    )
+                    let saved = max(0, video.fileSize - estSize)
+                    let pct = min(99, max(5, Int(round((Double(saved) / Double(max(1, video.fileSize))) * 100.0))))
                     
                     Button {
                         HapticManager.shared.selection()
@@ -135,15 +195,33 @@ struct VideoCompressorView: View {
                             selectedPreset = preset
                         }
                     } label: {
-                        HStack {
+                        HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(preset.rawValue)
-                                    .font(.subheadline)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.primary)
+                                HStack(spacing: 6) {
+                                    Text(preset.title(for: video))
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.primary)
+                                    
+                                    if preset == .medium {
+                                        Text("BEST")
+                                            .font(.system(size: 9, weight: .bold))
+                                            .padding(.horizontal, 5)
+                                            .padding(.vertical, 1.5)
+                                            .background(AppTheme.accentEmerald.opacity(0.18))
+                                            .foregroundColor(AppTheme.accentEmerald)
+                                            .clipShape(Capsule())
+                                    }
+                                }
+                                
+                                Text(preset.subtitle(for: video))
+                                    .font(.caption2)
+                                    .foregroundColor(AppTheme.subtleGray)
+                                    .multilineTextAlignment(.leading)
                                 
                                 Text("Est. ~\(ByteCountFormatter.string(fromByteCount: estSize, countStyle: .file)) • Save ~\(pct)%")
                                     .font(.caption)
+                                    .fontWeight(.medium)
                                     .foregroundColor(isSelected ? AppTheme.accentEmerald : AppTheme.subtleGray)
                             }
                             
@@ -202,7 +280,7 @@ struct VideoCompressorView: View {
                 }
             }
             
-            Text("Reclaim ~\(ByteCountFormatter.string(fromByteCount: estimatedSavings, countStyle: .file)) (\(Int(selectedPreset.reductionFactor * 100))% smaller)")
+            Text("Reclaim ~\(ByteCountFormatter.string(fromByteCount: estimatedSavings, countStyle: .file)) (\(reclaimPercent)% smaller)")
                 .font(.subheadline)
                 .fontWeight(.bold)
                 .foregroundColor(AppTheme.accentEmerald)
@@ -290,15 +368,55 @@ struct VideoCompressorView: View {
             
             if actualCompressedSize > 0 {
                 let saved = max(0, video.fileSize - actualCompressedSize)
-                VStack(spacing: 4) {
-                    Text(originalWasDeleted ? "Space Saved" : "Compressed File Size")
-                        .font(.caption)
-                        .foregroundColor(AppTheme.subtleGray)
-                    Text(ByteCountFormatter.string(fromByteCount: originalWasDeleted ? saved : actualCompressedSize, countStyle: .file))
-                        .font(.system(size: 32, weight: .heavy, design: .rounded))
-                        .foregroundColor(AppTheme.accentEmerald)
+                let actualSavedPct = min(99, max(1, Int(round((Double(saved) / Double(max(1, video.fileSize))) * 100.0))))
+                
+                VStack(spacing: 12) {
+                    HStack(spacing: 20) {
+                        VStack(spacing: 2) {
+                            Text("Original")
+                                .font(.caption2)
+                                .foregroundColor(AppTheme.subtleGray)
+                            Text(video.formattedSize)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(AppTheme.subtleGray)
+                        }
+                        
+                        Image(systemName: "arrow.right")
+                            .font(.caption)
+                            .foregroundColor(AppTheme.subtleGray.opacity(0.7))
+                            
+                        VStack(spacing: 2) {
+                            Text("Compressed")
+                                .font(.caption2)
+                                .foregroundColor(AppTheme.subtleGray)
+                            Text(ByteCountFormatter.string(fromByteCount: actualCompressedSize, countStyle: .file))
+                                .font(.subheadline)
+                                .fontWeight(.bold)
+                                .foregroundColor(.primary)
+                        }
+                    }
+                    
+                    Divider().opacity(0.4)
+                    
+                    VStack(spacing: 4) {
+                        Text(originalWasDeleted ? "Storage Reclaimed" : "Compressed File Size")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(AppTheme.subtleGray)
+                        Text(ByteCountFormatter.string(fromByteCount: originalWasDeleted ? saved : actualCompressedSize, countStyle: .file))
+                            .font(.system(size: 32, weight: .heavy, design: .rounded))
+                            .foregroundColor(AppTheme.accentEmerald)
+                        
+                        if originalWasDeleted {
+                            Text("(\(actualSavedPct)% smaller)")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(AppTheme.accentEmerald)
+                        }
+                    }
                 }
-                .padding()
+                .padding(16)
                 .frame(maxWidth: .infinity)
                 .cleanCardStyle(cornerRadius: 16)
             }
