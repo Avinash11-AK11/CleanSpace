@@ -7,6 +7,7 @@ struct DashboardView: View {
     @ObservedObject private var vaultManager = VaultManager.shared
     
     @State private var showPermissionSheet = false
+    @State private var showAboutSheet = false
     
     var body: some View {
         NavigationStack {
@@ -29,7 +30,24 @@ struct DashboardView: View {
                         cleanupCategoriesSection
                         
                         securitySection
-
+                        
+                        Button {
+                            HapticManager.shared.selection()
+                            showAboutSheet = true
+                        } label: {
+                            VStack(spacing: 4) {
+                                Text("CleanSpace v1.0.0")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(AppTheme.subtleGray)
+                                Text("Crafted with care by Avinash Chavda")
+                                    .font(.caption2)
+                                    .foregroundColor(AppTheme.accentEmerald)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 10)
+                        }
+                        .buttonStyle(PlainButtonStyle())
                         
                         Spacer().frame(height: 100)
                     }
@@ -64,6 +82,9 @@ struct DashboardView: View {
                     }
                 }
                 .presentationDetents([.fraction(0.7)])
+            }
+            .sheet(isPresented: $showAboutSheet) {
+                AboutAppView()
             }
             .onChange(of: cleanupManager.deletedAssetIds) {
                 Task {
@@ -318,6 +339,20 @@ struct DashboardView: View {
     
     private var toolbarIcons: some View {
         HStack(spacing: 8) {
+            Button {
+                HapticManager.shared.selection()
+                showAboutSheet = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(AppTheme.accentEmerald.opacity(0.12))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(AppTheme.accentEmerald)
+                }
+            }
+            
             NavigationLink(destination: VaultView()) {
                 ZStack {
                     Circle()
