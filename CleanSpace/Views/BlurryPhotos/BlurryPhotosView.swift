@@ -1,3 +1,11 @@
+//
+//  BlurryPhotosView.swift
+//  CleanSpace
+//
+//  Created by Avinash Chavda on 23/09/2026, 10:55 AM.
+//  Copyright © 2026 Avinash Chavda. All rights reserved.
+//
+
 import SwiftUI
 import Photos
 

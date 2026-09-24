@@ -1,3 +1,11 @@
+//
+//  VideoGroup.swift
+//  CleanSpace
+//
+//  Created by Avinash Chavda on 23/09/2026, 01:20 AM.
+//  Copyright © 2026 Avinash Chavda. All rights reserved.
+//
+
 import Foundation
 import Photos
 

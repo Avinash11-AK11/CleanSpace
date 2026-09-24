@@ -1,3 +1,11 @@
+//
+//  AboutAppView.swift
+//  CleanSpace
+//
+//  Created by Avinash Chavda on 24/09/2026, 10:11 AM.
+//  Copyright © 2026 Avinash Chavda. All rights reserved.
+//
+
 import SwiftUI
 
 struct AboutAppView: View {
@@ -6,7 +14,7 @@ struct AboutAppView: View {
     
     private let githubURL = URL(string: "https://github.com/Avinash11-AK11")!
     private let repoURL = URL(string: "https://github.com/Avinash11-AK11/CleanSpace")!
-    private let emailURL = URL(string: "mailto:avinashchavda11@gmail.com")!
+    private let emailURL = URL(string: "mailto:chavdaavinash24@gmail.com")!
     
     var body: some View {
         NavigationStack {
@@ -168,7 +176,7 @@ struct AboutAppView: View {
                 icon: "envelope.fill",
                 iconColor: AppTheme.accentPurple,
                 title: "Contact Developer",
-                subtitle: "avinashchavda11@gmail.com"
+                subtitle: "chavdaavinash24@gmail.com"
             ) {
                 openURL(emailURL)
             }
